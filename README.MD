@@ -4,9 +4,9 @@
 
 ### 1-2. Maven 3.5+
 
-### 1-3 git CLI
+### 1-3. git CLI
 
-### 1-4. Docker for mac or windows
+### 1-4. Docker for macOS or Windows
 
 ### 1-5. RabbitMQ
 ```
@@ -48,6 +48,8 @@ $ java -jar target/filter-processor-rabbit-2.0.0.BUILD-SNAPSHOT.jar --filter.exp
 ### 2-3. Build geocoding processor rabbit and run
 ### Convert lines to json data
 ```
+$ cd scs-process-geocoding-reverse
+$ mcn clean package
 $ java -jar target/scs-processor-geocoding-reverse-2.0.0.BUILD-SNAPSHOT.jar --spring.cloud.stream.bindings.input.contentType=text/plain --spring.cloud.stream.bindings.input.destination=filtered_lines --spring.cloud.stream.bindings.input.group=geocoding --spring.cloud.stream.bindings.output.destination=geojson --spring.cloud.stream.bindings.output.contentType=application/json --properties.mongo.hostName=localhost --properties.mongo.port=27017 --properties.mongo.database=geojson --properties.mongo.collection=blocks --properties.mongo.user=root --properties.mongo.password=keepitsimple --logging.level.info.cloudnative=TRACE --server.port=8020 --spring.cloud.stream.defaultBinder=rabbit --cloud.aws.region.static=ap-northeast-1
 ```
 
@@ -91,8 +93,8 @@ select * from geojson
 ```
 
 ------
-## 3. Build and run with Kinesis
-### 3-1. Build aws-s3 source rabbit and run
+## 4. Build and run with Kinesis
+### 4-1. Build aws-s3 source rabbit and run
 ### Add Kinesis Binder Dependency
 ```
 <dependency>
@@ -109,7 +111,7 @@ $ mvn clean package
 $ java -jar target/s3-source-rabbit-2.0.0.BUILD-SNAPSHOT.jar --s3.remoteDir=/s3exp/short_data.csv --file.consumer.mode=lines --spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1  --spring.cloud.stream.bindings.output.destination=s3_lines --spring.cloud.stream.bindings.output.contentType=text/plain --server.port=8000 --spring.cloud.stream.defaultBinder=kinesis --cloud.aws.region.static=ap-northeast-1
 ```
 
-### 3-2. Build filter processor kinesis and run
+### 4-2. Build filter processor kinesis and run
 ### Add Kinesis Binder Dependency
 ```
 <dependency>
@@ -125,18 +127,18 @@ $ mvn clean package
 $ java -jar target/filter-processor-rabbit-2.0.0.BUILD-SNAPSHOT.jar --filter.expression='payload.length>10'  --spring.cloud.stream.bindings.input.destination=s3_lines --spring.cloud.stream.bindings.input.group=filter --spring.cloud.stream.bindings.output.destination=filtered_lines --spring.cloud.stream.bindings.output.contentType=text/plain --spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1 --server.port=8010 --spring.cloud.stream.defaultBinder=kinesis --cloud.aws.region.static=ap-northeast-1
 ```
 
-### 3-3. Run geocoding processor with kinesis
+### 4-3. Run geocoding processor with kinesis
 ```
 $ java -jar target/scs-processor-geocoding-reverse-2.0.0.BUILD-SNAPSHOT.jar --spring.cloud.stream.bindings.input.destination=filtered_lines --spring.cloud.stream.bindings.input.group=geocoding --spring.cloud.stream.bindings.output.destination=geojson --spring.cloud.stream.bindings.output.contentType=application/json --spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1 --properties.mongo.hostName=localhost --properties.mongo.port=27017 --properties.mongo.database=geojson --properties.mongo.collection=blocks --properties.mongo.user=root --properties.mongo.password=keepitsimple --logging.level.info.cloudnative=TRACE --server.port=8020 --spring.cloud.stream.defaultBinder=kinesis --cloud.aws.region.static=ap-northeast-1
 ```
 
-### 3-4. Run a second filter processor kinesis
+### 4-4. Run a second filter processor kinesis
 ### Filter json with specified dropoff longitude range
 ```
 $ java -jar target/filter-processor-rabbit-2.0.0.BUILD-SNAPSHOT.jar --filter.expression="#jsonPath(new String(payload),'$.dropoffLongitude') < 139.76 && #jsonPath(new String(payload),'$.dropoffLongitude') > 139.73" --spring.cloud.stream.bindings.input.destination=geojson --spring.cloud.stream.bindings.input.group=filter --spring.cloud.stream.bindings.input.contentType=application/json --spring.cloud.stream.bindings.output.destination=filtered_geojson --spring.cloud.stream.bindings.output.contentType=application/json --spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1 --server.port=8030 --spring.cloud.stream.defaultBinder=kinesis --cloud.aws.region.static=ap-northeast-1
 ```
 
-### 3-5. Build log sink kinesis and run
+### 4-5. Build log sink kinesis and run
 ### Add Kinesis Binder Dependency
 ```
 <dependency>
@@ -152,7 +154,7 @@ $ mvn clean package
 $ java -jar target/log-sink-rabbit-2.0.0.BUILD-SNAPSHOT.jar --log.expression="#jsonPath(new String(payload),'$')" --spring.cloud.stream.bindings.input.destination=filtered_geojson --spring.cloud.stream.bindings.input.group=log --spring.cloud.stream.bindings.input.contentType=application/json --server.port=8040 --spring.cloud.stream.defaultBinder=kinesis --cloud.aws.region.static=ap-northeast-1 
 ```
 
-### 3-6. Build aws-s3 sink rabbit and run
+### 4-6. Build aws-s3 sink rabbit and run
 ### Add Kinesis Binder Dependency
 ```
 <dependency>
@@ -170,7 +172,7 @@ $ java -jar target/s3-sink-rabbit-2.0.0.BUILD-SNAPSHOT.jar --s3.key-expression="
 ```
 
 
-### 3-7. Athena query count and data
+### 4-7. Athena query count and data
 * Use [AWS Glue](https://console.aws.amazon.com/glue/home) to create a table geojson with crawler.
 
 * Use [Amazon Athena](https://console.aws.amazon.com/athena/home) to query exported data.
@@ -182,4 +184,4 @@ select * from geojson
 ```
 
 ------
-## 4. Dockerize and deploy to AWS ECS 
+## 5. Dockerize and deploy to AWS ECS 
