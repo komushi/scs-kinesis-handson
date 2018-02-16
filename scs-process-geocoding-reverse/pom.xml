@@ -9,9 +9,9 @@
     <relativePath/>
   </parent>
   <groupId>info.cloudnative</groupId>
-  <artifactId>scs-processor-geocoding-reverse</artifactId>
+  <artifactId>geocoding-processor-kinesis</artifactId>
   <version>2.0.0.BUILD-SNAPSHOT</version>
-  <name>scs-processor-geocoding-reverse</name>
+  <name>geocoding-processor-kinesis</name>
   <description>scs-processor-geocoding-reverse</description>
   <properties>
     <skipTests>true</skipTests>
@@ -114,7 +114,7 @@
         <configuration>
           <images>
             <image>
-              <name>komushi/${project.name}</name>
+              <name>komushi/${project.artifactId}</name>
               <build>
                 <from>anapsix/alpine-java:8</from>
                 <volumes>
@@ -124,7 +124,7 @@
                   <exec>
                     <arg>java</arg>
                     <arg>-jar</arg>
-                    <arg>/maven/${project.name}.jar</arg>
+                    <arg>/maven/${project.artifactId}.jar</arg>
                   </exec>
                 </entryPoint>
                 <assembly>

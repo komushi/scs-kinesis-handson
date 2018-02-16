@@ -24,7 +24,8 @@ $ docker run -p 27017:27017 komushi/mongo-geojson
 ## 2. Build and run with RabbitMQ
 
 ### 2-1. Build aws-s3 source rabbit and run
-### Replace 's3exp' with your own bucket to upload json file 'short_data.csv'
+#### Replace 's3exp' with your own bucket to upload the source csv file
+#### Replace 'ap-northeast-1' with your expected region
 ```
 $ git clone https://github.com/spring-cloud-stream-app-starters/aws-s3.git
 $ cd aws-s3
@@ -35,7 +36,8 @@ $ java -jar target/s3-source-rabbit-2.0.0.BUILD-SNAPSHOT.jar --s3.remoteDir=/s3e
 ```
 
 ### 2-2. Build filter processor rabbit and run
-### Only accept lines more than 10-digit
+#### Only accept lines more than 10-digit
+#### Replace 'ap-northeast-1' with your expected region
 ```
 $ git clone https://github.com/spring-cloud-stream-app-starters/filter.git
 $ cd filter
@@ -46,7 +48,8 @@ $ java -jar target/filter-processor-rabbit-2.0.0.BUILD-SNAPSHOT.jar --filter.exp
 ```
 
 ### 2-3. Build geocoding processor rabbit and run
-### Convert lines to json data
+#### Convert lines to json data
+#### Replace 'ap-northeast-1' with your expected region
 ```
 $ cd scs-process-geocoding-reverse
 $ mcn clean package
@@ -54,13 +57,15 @@ $ java -jar target/scs-processor-geocoding-reverse-2.0.0.BUILD-SNAPSHOT.jar --sp
 ```
 
 ### 2-4. Run a second filter processor rabbit
-### Filter json with specified dropoff longitude range
+#### Filter json with specified dropoff longitude range
+#### Replace 'ap-northeast-1' with your expected region
 ```
 $ java -jar target/filter-processor-rabbit-2.0.0.BUILD-SNAPSHOT.jar --filter.expression="#jsonPath(new String(payload),'$.dropoffLongitude') < 139.76 && #jsonPath(new String(payload),'$.dropoffLongitude') > 139.73" --spring.cloud.stream.bindings.input.destination=geojson --spring.cloud.stream.bindings.input.group=filter --spring.cloud.stream.bindings.input.contentType=application/json --spring.cloud.stream.bindings.output.destination=filtered_geojson --spring.cloud.stream.bindings.output.contentType=application/json --server.port=8030 --spring.cloud.stream.defaultBinder=rabbit --cloud.aws.region.static=ap-northeast-1
 ```
 
 ### 2-5. Build log sink rabbit and run
-### Export filtered data to log
+#### Export filtered data to log
+#### Replace 'ap-northeast-1' with your expected region
 ```
 $ git clone https://github.com/spring-cloud-stream-app-starters/log.git
 $ cd log
@@ -71,7 +76,8 @@ $ java -jar target/log-sink-rabbit-2.0.0.BUILD-SNAPSHOT.jar --log.expression="#j
 ```
 
 ### 2-6. Build aws-s3 sink rabbit and run
-### Replace 'glue-output-ap-northeast-1' with your own bucket to export filtered data to S3 bucket
+#### Replace 'glue-output-ap-northeast-1' with your own bucket to export filtered data to S3 bucket
+#### Replace 'ap-northeast-1' with your expected region
 ```
 $ git clone https://github.com/spring-cloud-stream-app-starters/aws-s3.git
 $ cd aws-s3
@@ -92,10 +98,37 @@ select count(*) from geojson
 select * from geojson
 ```
 
+### 2-8. Start the stream
+#### Upload the 'data/short_data.csv' to the source s3 bucket to trigger the events
+
 ------
+## 3. Scale-out test
+### 3-1. Start the stream with a data file in a much bigger size.
+#### Rename 'data/long_data.csv' to 'short_data.csv' and upload to the source s3 bucket to trigger the events
+#### Check the CPU load and th PID of the Java proccesses
+
+### 3-2. Scale out geocoding processor
+
+#### Scale out the 2nd geocoding processor
+#### Replace 'ap-northeast-1' with your expected region
+```
+$ cd scs-process-geocoding-reverse
+$ java -jar target/scs-processor-geocoding-reverse-2.0.0.BUILD-SNAPSHOT.jar --spring.cloud.stream.bindings.input.contentType=text/plain --spring.cloud.stream.bindings.input.destination=filtered_lines --spring.cloud.stream.bindings.input.group=geocoding --spring.cloud.stream.bindings.output.destination=geojson --spring.cloud.stream.bindings.output.contentType=application/json --properties.mongo.hostName=localhost --properties.mongo.port=27017 --properties.mongo.database=geojson --properties.mongo.collection=blocks --properties.mongo.user=root --properties.mongo.password=keepitsimple --logging.level.info.cloudnative=TRACE --server.port=8021 --spring.cloud.stream.defaultBinder=rabbit --cloud.aws.region.static=ap-northeast-1
+```
+
+#### Scale out the 3rd geocoding processor
+#### Replace 'ap-northeast-1' with your expected region
+```
+$ cd scs-process-geocoding-reverse
+$ java -jar target/scs-processor-geocoding-reverse-2.0.0.BUILD-SNAPSHOT.jar --spring.cloud.stream.bindings.input.contentType=text/plain --spring.cloud.stream.bindings.input.destination=filtered_lines --spring.cloud.stream.bindings.input.group=geocoding --spring.cloud.stream.bindings.output.destination=geojson --spring.cloud.stream.bindings.output.contentType=application/json --properties.mongo.hostName=localhost --properties.mongo.port=27017 --properties.mongo.database=geojson --properties.mongo.collection=blocks --properties.mongo.user=root --properties.mongo.password=keepitsimple --logging.level.info.cloudnative=TRACE --server.port=8022 --spring.cloud.stream.defaultBinder=rabbit --cloud.aws.region.static=ap-northeast-1
+```
+
+#### Check the CPU load and th PID of the Java proccesses - scs-processor-geocoding-reverse-2.0.0.BUILD-SNAPSHOT.jar
+------
+
 ## 4. Build and run with Kinesis
 ### 4-1. Build aws-s3 source rabbit and run
-### Add Kinesis Binder Dependency
+#### Add Kinesis Binder Dependency in pom.xml
 ```
 <dependency>
     <groupId>org.springframework.cloud</groupId>
@@ -104,7 +137,8 @@ select * from geojson
 </dependency>
 ```
 
-### Replace 's3exp' with your own bucket to upload json file 'short_data.csv'
+#### Replace 's3exp' with your own bucket to upload the source csv file
+#### Replace 'ap-northeast-1' with your expected region
 ```
 $ cd aws-s3/apps/s3-source-rabbit
 $ mvn clean package
@@ -112,7 +146,7 @@ $ java -jar target/s3-source-rabbit-2.0.0.BUILD-SNAPSHOT.jar --s3.remoteDir=/s3e
 ```
 
 ### 4-2. Build filter processor kinesis and run
-### Add Kinesis Binder Dependency
+#### Add Kinesis Binder Dependency in pom.xml
 ```
 <dependency>
     <groupId>org.springframework.cloud</groupId>
@@ -121,6 +155,7 @@ $ java -jar target/s3-source-rabbit-2.0.0.BUILD-SNAPSHOT.jar --s3.remoteDir=/s3e
 </dependency>
 ```
 
+#### Replace 'ap-northeast-1' with your expected region
 ```
 $ cd filter/apps/filter-processor-rabbit
 $ mvn clean package
@@ -128,18 +163,20 @@ $ java -jar target/filter-processor-rabbit-2.0.0.BUILD-SNAPSHOT.jar --filter.exp
 ```
 
 ### 4-3. Run geocoding processor with kinesis
+#### Replace 'ap-northeast-1' with your expected region
 ```
 $ java -jar target/scs-processor-geocoding-reverse-2.0.0.BUILD-SNAPSHOT.jar --spring.cloud.stream.bindings.input.destination=filtered_lines --spring.cloud.stream.bindings.input.group=geocoding --spring.cloud.stream.bindings.output.destination=geojson --spring.cloud.stream.bindings.output.contentType=application/json --spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1 --properties.mongo.hostName=localhost --properties.mongo.port=27017 --properties.mongo.database=geojson --properties.mongo.collection=blocks --properties.mongo.user=root --properties.mongo.password=keepitsimple --logging.level.info.cloudnative=TRACE --server.port=8020 --spring.cloud.stream.defaultBinder=kinesis --cloud.aws.region.static=ap-northeast-1
 ```
 
 ### 4-4. Run a second filter processor kinesis
-### Filter json with specified dropoff longitude range
+#### Filter json with specified dropoff longitude range
+#### Replace 'ap-northeast-1' with your expected region
 ```
 $ java -jar target/filter-processor-rabbit-2.0.0.BUILD-SNAPSHOT.jar --filter.expression="#jsonPath(new String(payload),'$.dropoffLongitude') < 139.76 && #jsonPath(new String(payload),'$.dropoffLongitude') > 139.73" --spring.cloud.stream.bindings.input.destination=geojson --spring.cloud.stream.bindings.input.group=filter --spring.cloud.stream.bindings.input.contentType=application/json --spring.cloud.stream.bindings.output.destination=filtered_geojson --spring.cloud.stream.bindings.output.contentType=application/json --spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1 --server.port=8030 --spring.cloud.stream.defaultBinder=kinesis --cloud.aws.region.static=ap-northeast-1
 ```
 
 ### 4-5. Build log sink kinesis and run
-### Add Kinesis Binder Dependency
+#### Add Kinesis Binder Dependency in pom.xml
 ```
 <dependency>
     <groupId>org.springframework.cloud</groupId>
@@ -148,6 +185,7 @@ $ java -jar target/filter-processor-rabbit-2.0.0.BUILD-SNAPSHOT.jar --filter.exp
 </dependency>
 ```
 
+#### Replace 'ap-northeast-1' with your expected region
 ```
 $ cd log/apps/log-sink-rabbit
 $ mvn clean package
@@ -155,7 +193,7 @@ $ java -jar target/log-sink-rabbit-2.0.0.BUILD-SNAPSHOT.jar --log.expression="#j
 ```
 
 ### 4-6. Build aws-s3 sink rabbit and run
-### Add Kinesis Binder Dependency
+#### Add Kinesis Binder Dependency in pom.xml
 ```
 <dependency>
     <groupId>org.springframework.cloud</groupId>
@@ -164,7 +202,8 @@ $ java -jar target/log-sink-rabbit-2.0.0.BUILD-SNAPSHOT.jar --log.expression="#j
 </dependency>
 ```
 
-### Replace 'glue-output-ap-northeast-1' with your own bucket to export filtered data to S3 bucket
+#### Replace 'glue-output-ap-northeast-1' with your own bucket to export filtered data to S3 bucket
+#### Replace 'ap-northeast-1' with your expected region
 ```
 $ cd aws-s3/apps/s3-sink-rabbit
 $ mvn clean package
@@ -183,5 +222,43 @@ select count(*) from geojson
 select * from geojson
 ```
 
+### 4-8. Start the stream
+#### Upload the 'data/short_data.csv' to the source s3 bucket to trigger the events
+
 ------
 ## 5. Dockerize and deploy to AWS ECS 
+
+### 5-1. Dockerize aws-s3 source kinesis
+
+#### Edit plugin.configuration.images.image.name of docker-maven-plugin in pom.xml
+#### Change 'springcloudstream' to your Docker hub user
+```
+  <plugin>
+    <groupId>io.fabric8</groupId>
+    <artifactId>docker-maven-plugin</artifactId>
+    <version>0.14.2</version>
+    <configuration>
+      <images>
+        <image>
+          <name>komushi/scs-source-kinesis</name>
+          <build>
+            <from>anapsix/alpine-java:8</from>
+            <volumes>
+              <volume>/tmp</volume>
+            </volumes>
+            <entryPoint>
+              <exec>
+                <arg>java</arg>
+                <arg>-jar</arg>
+                <arg>/maven/s3-source-rabbit.jar</arg>
+              </exec>
+            </entryPoint>
+            <assembly>
+              <descriptor>assembly.xml</descriptor>
+            </assembly>
+          </build>
+        </image>
+      </images>
+    </configuration>
+  </plugin>
+```
