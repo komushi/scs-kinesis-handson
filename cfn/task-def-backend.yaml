@@ -1,0 +1,53 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Stack to Create ECS Task Definition
+
+Parameters:
+  StackName:
+    Type: String
+  EcsTaskExecutionRoleArn:
+    Type: String
+  ScsTaskRoleArn:
+    Type: String
+
+Resources:
+  LogGroupMongo:
+    Type: "AWS::Logs::LogGroup"
+    Properties: 
+      LogGroupName: !Sub /ecs/mongo-geojson-${StackName}
+
+  DefMongo: 
+    Type: "AWS::ECS::TaskDefinition"
+    Properties: 
+      Family: !Sub def-mongo-geojson-${StackName}
+      RequiresCompatibilities:
+        - "FARGATE"
+      ExecutionRoleArn:
+        Ref: EcsTaskExecutionRoleArn
+      Memory: "2048"
+      Cpu: "1024"
+      TaskRoleArn:
+        Ref: ScsTaskRoleArn
+      NetworkMode: "awsvpc"
+      ContainerDefinitions: 
+        - 
+          Name: "mongo-geojson"
+          Image: "komushi/mongo-geojson"
+          Essential: "true"
+          PortMappings:
+            -
+              ContainerPort: 27017
+              HostPort: 27017
+              Protocol: "tcp"
+          LogConfiguration: 
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref LogGroupMongo
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: "ecs"
+
+Outputs:
+  DefMongoArn:
+    Description: ARN of the Mongo task definition
+    Value:
+      Ref: DefMongo

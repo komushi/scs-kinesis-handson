@@ -320,7 +320,7 @@ $ docker push komushi/filter-processor-kinesis
     <configuration>
       <images>
         <image>
-          <name>komushi/${project.artifactId}</name>
+          <name>komushi/geocoding-processor-kinesis</name>
           <build>
             <from>anapsix/alpine-java:8</from>
             <volumes>
@@ -330,7 +330,7 @@ $ docker push komushi/filter-processor-kinesis
               <exec>
                 <arg>java</arg>
                 <arg>-jar</arg>
-                <arg>/maven/${project.artifactId}.jar</arg>
+                <arg>/maven/scs-processor-geocoding-reverse.jar</arg>
               </exec>
             </entryPoint>
             <assembly>
