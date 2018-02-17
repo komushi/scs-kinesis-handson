@@ -122,7 +122,7 @@
         <configuration>
           <images>
             <image>
-              <name>springcloudstream/${project.artifactId}</name>
+              <name>komushi/s3-sink-kinesis</name>
               <build>
                 <from>anapsix/alpine-java:8</from>
                 <volumes>

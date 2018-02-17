@@ -128,7 +128,7 @@ $ java -jar target/scs-processor-geocoding-reverse-2.0.0.BUILD-SNAPSHOT.jar --sp
 
 ## 4. Build and run with Kinesis
 ### 4-1. Build aws-s3 source rabbit and run
-#### Add Kinesis Binder Dependency in pom.xml
+#### Add Kinesis Binder Dependency in 'aws-s3/apps/s3-source-rabbit/pom.xml'
 ```
 <dependency>
     <groupId>org.springframework.cloud</groupId>
@@ -146,7 +146,7 @@ $ java -jar target/s3-source-rabbit-2.0.0.BUILD-SNAPSHOT.jar --s3.remoteDir=/s3e
 ```
 
 ### 4-2. Build filter processor kinesis and run
-#### Add Kinesis Binder Dependency in pom.xml
+#### Add Kinesis Binder Dependency in 'filter/apps/filter-processor-rabbit/pom.xml'
 ```
 <dependency>
     <groupId>org.springframework.cloud</groupId>
@@ -176,7 +176,7 @@ $ java -jar target/filter-processor-rabbit-2.0.0.BUILD-SNAPSHOT.jar --filter.exp
 ```
 
 ### 4-5. Build log sink kinesis and run
-#### Add Kinesis Binder Dependency in pom.xml
+#### Add Kinesis Binder Dependency in 'log/apps/log-sink-rabbit/pom.xml'
 ```
 <dependency>
     <groupId>org.springframework.cloud</groupId>
@@ -193,7 +193,7 @@ $ java -jar target/log-sink-rabbit-2.0.0.BUILD-SNAPSHOT.jar --log.expression="#j
 ```
 
 ### 4-6. Build aws-s3 sink rabbit and run
-#### Add Kinesis Binder Dependency in pom.xml
+#### Add Kinesis Binder Dependency in 'aws-s3/apps/s3-sink-rabbit/pom.xml'
 ```
 <dependency>
     <groupId>org.springframework.cloud</groupId>
@@ -229,9 +229,7 @@ select * from geojson
 ## 5. Dockerize and deploy to AWS ECS 
 
 ### 5-1. Dockerize aws-s3 source kinesis
-
-#### Edit plugin.configuration.images.image.name of docker-maven-plugin in pom.xml
-#### Change 'springcloudstream' to your Docker hub user
+#### Modify 'plugin.configuration.images.image.name' of 'docker-maven-plugin' in 'aws-s3/apps/s3-sink-rabbit/pom.xml' to '<your_docker_hub_id>/s3-source-kinesis'
 ```
   <plugin>
     <groupId>io.fabric8</groupId>
@@ -240,7 +238,7 @@ select * from geojson
     <configuration>
       <images>
         <image>
-          <name>komushi/scs-source-kinesis</name>
+          <name>komushi/s3-source-kinesis</name>
           <build>
             <from>anapsix/alpine-java:8</from>
             <volumes>
@@ -261,4 +259,175 @@ select * from geojson
       </images>
     </configuration>
   </plugin>
+```
+
+#### Build and push Docker image
+#### Replace 'komushi' with your your_docker_hub_id
+```
+$ mvn clean package docker:build
+$ docker push komushi/s3-source-kinesis
+```
+
+### 5-2. Dockerize filter processor kinesis
+#### Modify 'plugin.configuration.images.image.name' of 'docker-maven-plugin' in 'filter/apps/filter-processor-rabbit/pom.xml' to '<your_docker_hub_id>/filter-processor-kinesis'
+
+```
+  <plugin>
+    <groupId>io.fabric8</groupId>
+    <artifactId>docker-maven-plugin</artifactId>
+    <version>0.14.2</version>
+    <configuration>
+      <images>
+        <image>
+          <name>komushi/filter-processor-kinesis</name>
+          <build>
+            <from>anapsix/alpine-java:8</from>
+            <volumes>
+              <volume>/tmp</volume>
+            </volumes>
+            <entryPoint>
+              <exec>
+                <arg>java</arg>
+                <arg>-jar</arg>
+                <arg>/maven/filter-processor-rabbit.jar</arg>
+              </exec>
+            </entryPoint>
+            <assembly>
+              <descriptor>assembly.xml</descriptor>
+            </assembly>
+          </build>
+        </image>
+      </images>
+    </configuration>
+  </plugin>
+```
+
+#### Build and push Docker image
+#### Replace 'komushi' with your your_docker_hub_id
+```
+$ mvn clean package docker:build
+$ docker push komushi/filter-processor-kinesis
+```
+
+### 5-3. Dockerize geocoding processor kinesis
+#### Modify 'plugin.configuration.images.image.name' of 'docker-maven-plugin' in 'scs-process-geocoding-reverse/pom.xml' to '<your_docker_hub_id>/geocoding-processor-kinesis'
+
+```
+  <plugin>
+    <groupId>io.fabric8</groupId>
+    <artifactId>docker-maven-plugin</artifactId>
+    <version>0.23.0</version>
+    <configuration>
+      <images>
+        <image>
+          <name>komushi/${project.artifactId}</name>
+          <build>
+            <from>anapsix/alpine-java:8</from>
+            <volumes>
+              <volume>/tmp</volume>
+            </volumes>
+            <entryPoint>
+              <exec>
+                <arg>java</arg>
+                <arg>-jar</arg>
+                <arg>/maven/${project.artifactId}.jar</arg>
+              </exec>
+            </entryPoint>
+            <assembly>
+              <descriptor>assembly.xml</descriptor>
+            </assembly>
+          </build>
+        </image>
+      </images>
+    </configuration>
+  </plugin>
+```
+
+#### Build and push Docker image
+#### Replace 'komushi' with your your_docker_hub_id
+```
+$ mvn clean package docker:build
+$ docker push komushi/geocoding-processor-kinesis
+```
+
+### 5-4. Dockerize log sink kinesis
+#### Modify 'plugin.configuration.images.image.name' of 'docker-maven-plugin' in 'log/apps/log-sink-rabbit/pom.xml' to '<your_docker_hub_id>/log-sink-kinesis'
+
+```
+  <plugin>
+    <groupId>io.fabric8</groupId>
+    <artifactId>docker-maven-plugin</artifactId>
+    <version>0.14.2</version>
+    <configuration>
+      <images>
+        <image>
+          <name>komushi/log-sink-kinesis</name>
+          <build>
+            <from>anapsix/alpine-java:8</from>
+            <volumes>
+              <volume>/tmp</volume>
+            </volumes>
+            <entryPoint>
+              <exec>
+                <arg>java</arg>
+                <arg>-jar</arg>
+                <arg>/maven/log-sink-rabbit.jar</arg>
+              </exec>
+            </entryPoint>
+            <assembly>
+              <descriptor>assembly.xml</descriptor>
+            </assembly>
+          </build>
+        </image>
+      </images>
+    </configuration>
+  </plugin>
+```
+
+#### Build and push Docker image
+#### Replace 'komushi' with your your_docker_hub_id
+```
+$ mvn clean package docker:build
+$ docker push komushi/log-sink-kinesis
+```
+
+### 5-5. Dockerize s3 sink kinesis
+#### Modify 'plugin.configuration.images.image.name' of 'docker-maven-plugin' in 'aws-s3/apps/s3-sink-rabbit/pom.xml' to '<your_docker_hub_id>/s3-sink-kinesis'
+
+```
+  <plugin>
+    <groupId>io.fabric8</groupId>
+    <artifactId>docker-maven-plugin</artifactId>
+    <version>0.14.2</version>
+    <configuration>
+      <images>
+        <image>
+          <name>komushi/s3-sink-kinesis</name>
+          <build>
+            <from>anapsix/alpine-java:8</from>
+            <volumes>
+              <volume>/tmp</volume>
+            </volumes>
+            <entryPoint>
+              <exec>
+                <arg>java</arg>
+                <arg>-jar</arg>
+                <arg>/maven/s3-sink-rabbit.jar</arg>
+              </exec>
+            </entryPoint>
+            <assembly>
+              <descriptor>assembly.xml</descriptor>
+            </assembly>
+          </build>
+        </image>
+      </images>
+    </configuration>
+  </plugin>
+```
+
+#### Build and push Docker image
+#### Replace 'komushi' with your your_docker_hub_id
+```
+$ mvn clean package docker:build
+$ docker push komushi/s3-sink-kinesis
 ```

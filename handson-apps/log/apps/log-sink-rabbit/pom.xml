@@ -9,10 +9,10 @@
     <relativePath></relativePath>
   </parent>
   <groupId>org.springframework.cloud.stream.app</groupId>
-  <artifactId>filter-processor-rabbit</artifactId>
+  <artifactId>log-sink-rabbit</artifactId>
   <version>2.0.0.BUILD-SNAPSHOT</version>
-  <name>filter-processor-rabbit</name>
-  <description>Spring Cloud Stream Filter Processor Rabbit Binder Application</description>
+  <name>log-sink-rabbit</name>
+  <description>Spring Cloud Stream Log Sink Rabbit Binder Application</description>
   <distributionManagement>
     <repository>
       <id>repo.spring.io</id>
@@ -34,7 +34,7 @@
     <dependencies>
       <dependency>
         <groupId>org.springframework.cloud.stream.app</groupId>
-        <artifactId>filter-app-dependencies</artifactId>
+        <artifactId>log-app-dependencies</artifactId>
         <version>2.0.0.BUILD-SNAPSHOT</version>
         <type>pom</type>
         <scope>import</scope>
@@ -54,10 +54,6 @@
       <artifactId>spring-cloud-starter-config</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.springframework.cloud.stream.app</groupId>
-      <artifactId>spring-cloud-starter-stream-processor-filter</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.springframework.cloud</groupId>
       <artifactId>spring-cloud-starter-stream-rabbit</artifactId>
     </dependency>
@@ -65,6 +61,10 @@
       <groupId>org.springframework.cloud</groupId>
       <artifactId>spring-cloud-starter-stream-kinesis</artifactId>
       <version>1.0.0.BUILD-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.cloud.stream.app</groupId>
+      <artifactId>spring-cloud-starter-stream-sink-log</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -121,7 +121,7 @@
         <configuration>
           <images>
             <image>
-              <name>springcloudstream/${project.artifactId}</name>
+              <name>komushi/log-sink-kinesis</name>
               <build>
                 <from>anapsix/alpine-java:8</from>
                 <volumes>
@@ -131,7 +131,7 @@
                   <exec>
                     <arg>java</arg>
                     <arg>-jar</arg>
-                    <arg>/maven/filter-processor-rabbit.jar</arg>
+                    <arg>/maven/log-sink-rabbit.jar</arg>
                   </exec>
                 </entryPoint>
                 <assembly>

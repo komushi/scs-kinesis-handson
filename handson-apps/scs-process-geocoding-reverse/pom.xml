@@ -8,23 +8,11 @@
     <version>2.0.0.BUILD-SNAPSHOT</version>
     <relativePath></relativePath>
   </parent>
-  <groupId>org.springframework.cloud.stream.app</groupId>
-  <artifactId>log-sink-rabbit</artifactId>
+  <groupId>info.cloudnative</groupId>
+  <artifactId>scs-processor-geocoding-reverse</artifactId>
   <version>2.0.0.BUILD-SNAPSHOT</version>
-  <name>log-sink-rabbit</name>
-  <description>Spring Cloud Stream Log Sink Rabbit Binder Application</description>
-  <distributionManagement>
-    <repository>
-      <id>repo.spring.io</id>
-      <name>Spring Release Repository</name>
-      <url>https://repo.spring.io/libs-release-local</url>
-    </repository>
-    <snapshotRepository>
-      <id>repo.spring.io</id>
-      <name>Spring Snapshot Repository</name>
-      <url>https://repo.spring.io/libs-snapshot-local</url>
-    </snapshotRepository>
-  </distributionManagement>
+  <name>scs-processor-geocoding-reverse</name>
+  <description>scs-processor-geocoding-reverse</description>
   <properties>
     <skipTests>true</skipTests>
     <java.version>1.8</java.version>
@@ -32,13 +20,6 @@
   </properties>
   <dependencyManagement>
     <dependencies>
-      <dependency>
-        <groupId>org.springframework.cloud.stream.app</groupId>
-        <artifactId>log-app-dependencies</artifactId>
-        <version>2.0.0.BUILD-SNAPSHOT</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
       <dependency>
         <groupId>org.springframework.cloud.stream.app</groupId>
         <artifactId>app-starters-core-dependencies</artifactId>
@@ -59,24 +40,36 @@
     </dependency>
     <dependency>
       <groupId>org.springframework.cloud</groupId>
-      <artifactId>spring-cloud-starter-stream-kinesis</artifactId>
-      <version>1.0.0.BUILD-SNAPSHOT</version>
+      <artifactId>spring-cloud-starter-stream-kafka</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.springframework.cloud.stream.app</groupId>
-      <artifactId>spring-cloud-starter-stream-sink-log</artifactId>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-stream-kinesis</artifactId>
+      <version>1.0.0.BUILD-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-mongodb</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.mongodb</groupId>
+      <artifactId>mongo-java-driver</artifactId>
+      <version>3.4.0</version>
+    </dependency>
   </dependencies>
   <repositories>
     <repository>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
+      <id>spring-libs-release</id>
+      <name>Spring libs-release Maven Repository</name>
+      <url>https://repo.spring.io/libs-release</url>
+    </repository>
+    <repository>
+      <snapshots />
       <id>spring-snapshots</id>
       <name>Spring Snapshots</name>
       <url>https://repo.spring.io/snapshot</url>
@@ -97,7 +90,7 @@
       </snapshots>
       <id>spring-snapshots</id>
       <name>Spring Snapshots</name>
-      <url>https://repo.spring.io/snapshot</url>
+      <url>http://repo.spring.io/libs-snapshot-local</url>
     </pluginRepository>
     <pluginRepository>
       <snapshots>
@@ -105,7 +98,7 @@
       </snapshots>
       <id>spring-milestones</id>
       <name>Spring Milestones</name>
-      <url>https://repo.spring.io/milestone</url>
+      <url>http://repo.spring.io/libs-milestone-local</url>
     </pluginRepository>
   </pluginRepositories>
   <build>
@@ -117,11 +110,11 @@
       <plugin>
         <groupId>io.fabric8</groupId>
         <artifactId>docker-maven-plugin</artifactId>
-        <version>0.14.2</version>
+        <version>0.23.0</version>
         <configuration>
           <images>
             <image>
-              <name>springcloudstream/${project.artifactId}</name>
+              <name>komushi/geocoding-processor-kinesis</name>
               <build>
                 <from>anapsix/alpine-java:8</from>
                 <volumes>
@@ -131,7 +124,7 @@
                   <exec>
                     <arg>java</arg>
                     <arg>-jar</arg>
-                    <arg>/maven/log-sink-rabbit.jar</arg>
+                    <arg>/maven/scs-processor-geocoding-reverse.jar</arg>
                   </exec>
                 </entryPoint>
                 <assembly>
