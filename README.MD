@@ -435,12 +435,14 @@ $ docker push komushi/s3-sink-kinesis
 ------
 ## 6. Deploy to AWS ECS
 
-### 6-1. Create a fargate cluster together with VPC with Console Management
+### 6-1. Create a fargate cluster with a new VPC with Console Management
 [Creating a Cluster](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/create_cluster.html)
 
-### 6-2. Deploy resources with CloudFormation Template
+### 6-2. Edit 'ContainerDefinitions.Image' in 'cfn/task-def-apps.yaml'
+#### Replace 'komushi' with your your_docker_hub_id
 
-![Master Stack](https://cfn-template-group.s3.amazonaws.com/scs-iot/without_route53/master.yaml)
+### 6-3. Deploy resources with CloudFormation Template
+![Master Stack](cfn/master.yaml)
 
 | Parameters          | Value                                             |
 | ------------------- | ------------------------------------------------- |
@@ -452,15 +454,14 @@ $ docker push komushi/s3-sink-kinesis
 | SourcePath          | The Source S3 Bucket Path to upload the csv file  |
 | DestinationPath     | The Destination Bucket Path to store the result   |
 
-### 6-3. Upload the 'data/long_data.csv' to the source s3 bucket
+### 6-4. Upload the 'data/long_data.csv' to the source s3 bucket
 #### Check the log of the apps
 #### Scale out the busy apps
 * def-geocoding-processor
 * def-s3-source
 
-### 6-4. Athena query count and data
+### 6-5. Athena query count and data
 * Use [AWS Glue](https://console.aws.amazon.com/glue/home) to create a table geojson with crawler.
-
 * Use [Amazon Athena](https://console.aws.amazon.com/athena/home) to query exported data.
 
 ```
