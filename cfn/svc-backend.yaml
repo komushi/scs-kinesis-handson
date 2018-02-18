@@ -1,6 +1,6 @@
 ---
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Stack to Create Fargate Service
+Description: Stack to Create Fargate Service for Backend
 
 Parameters:
   TargetGroupMongoArn:
@@ -24,7 +24,7 @@ Resources:
         Ref: FargateClusterArn
       TaskDefinition:
         Ref: TaskDefMongoArn
-      DesiredCount: 1
+      DesiredCount: 2
       LoadBalancers:
       - TargetGroupArn:
           Ref: TargetGroupMongoArn

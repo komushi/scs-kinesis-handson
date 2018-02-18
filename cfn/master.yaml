@@ -58,19 +58,38 @@ Resources:
         PublicSubnets: !Join [ ",", !Ref PublicSubnets ]
         SecurityGroup: !Ref SecurityGroup
 
+  TaskDefAppsStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-kinesis-handson/task-def-apps.yaml
+      Parameters:
+        MongoDns: !GetAtt NlbStack.Outputs.LoadBalancerDns
+        EcsTaskExecutionRoleArn: !GetAtt IamStack.Outputs.EcsTaskExecutionRoleArn
+        ScsTaskRoleArn: !GetAtt IamStack.Outputs.ScsTaskRoleArn
+        StackName: !Ref AWS::StackName
 
+  SvcAppsStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: SvcBackendStack
+    Properties:
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-kinesis-handson/svc-apps.yaml
+      Parameters:
+        TaskDefS3SourceArn: !GetAtt TaskDefAppsStack.Outputs.DefS3SourceArn
+        TaskDefFilterProcessorLinesArn: !GetAtt TaskDefAppsStack.Outputs.DefFilterProcessorLinesArn
+        TaskDefGeocodingProcessorArn: !GetAtt TaskDefAppsStack.Outputs.DefGeocodingProcessorArn
+        TaskDefFilterProcessorGeojsonArn: !GetAtt TaskDefAppsStack.Outputs.DefFilterProcessorGeojsonArn
+        TaskDefLogSinkArn: !GetAtt TaskDefAppsStack.Outputs.DefLogSinkArn
+        TaskDefS3SinkArn: !GetAtt TaskDefAppsStack.Outputs.DefS3SinkArn
+        FargateClusterArn: 
+          !Join
+          - ":"
+          - - "arn"
+            - "aws"
+            - "ecs"
+            - !Ref "AWS::Region"
+            - !Ref "AWS::AccountId"
+            - !Sub cluster/${FargateClusterName}
+        PublicSubnets: !Join [ ",", !Ref PublicSubnets ]
+        SecurityGroup: !Ref SecurityGroup
 
-
-
-
-  # EcsStack:
-  #   Type: AWS::CloudFormation::Stack
-  #   Properties:
-  #     TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/ecs-backend-nlb.yaml
-  #     Parameters:
-  #       TaskDefMongoArn: !GetAtt TaskDefBackendStack.Outputs.DefMongoArn
-  #       TaskDefGeodeArn: !GetAtt TaskDefBackendStack.Outputs.DefGeodeArn
-  #       TargetGroupMongoArn: !GetAtt NlbStack.Outputs.TargetGroupMongoArn
-  #       TargetGroupGeodeArn: !GetAtt NlbStack.Outputs.TargetGroupGeodeArn
-  #       EcsClusterArn: "arn:aws:ecs:ap-northeast-1:042083552617:cluster/ec2-scs"
-
+  

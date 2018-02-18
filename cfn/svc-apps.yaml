@@ -1,0 +1,122 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Stack to Create Fargate Service for Apps
+
+Parameters:
+  TaskDefS3SourceArn:
+    Type: String
+  TaskDefFilterProcessorLinesArn:
+    Type: String
+  TaskDefGeocodingProcessorArn:
+    Type: String
+  TaskDefFilterProcessorGeojsonArn:
+    Type: String
+  TaskDefLogSinkArn:
+    Type: String
+  TaskDefS3SinkArn:
+    Type: String
+  FargateClusterArn:
+    Type: String
+  PublicSubnets:
+    Description: Choose the PublicSubnets
+    Type: List<AWS::EC2::Subnet::Id>
+  SecurityGroup:
+    Description: Select the Security Group
+    Type: AWS::EC2::SecurityGroup::Id
+
+Resources:
+  S3SourceService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster:
+        Ref: FargateClusterArn
+      TaskDefinition:
+        Ref: TaskDefS3SourceArn
+      DesiredCount: 1
+      NetworkConfiguration: 
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets: !Ref PublicSubnets
+          SecurityGroups: 
+            - !Ref SecurityGroup
+      LaunchType: FARGATE
+
+  FilterProcessorLinesService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster:
+        Ref: FargateClusterArn
+      TaskDefinition:
+        Ref: TaskDefFilterProcessorLinesArn
+      DesiredCount: 1
+      NetworkConfiguration: 
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets: !Ref PublicSubnets
+          SecurityGroups: 
+            - !Ref SecurityGroup
+      LaunchType: FARGATE
+
+  GeocodingProcessorService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster:
+        Ref: FargateClusterArn
+      TaskDefinition:
+        Ref: TaskDefGeocodingProcessorArn
+      DesiredCount: 1
+      NetworkConfiguration: 
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets: !Ref PublicSubnets
+          SecurityGroups: 
+            - !Ref SecurityGroup
+      LaunchType: FARGATE
+
+  FilterProcessorGeojsonService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster:
+        Ref: FargateClusterArn
+      TaskDefinition:
+        Ref: TaskDefFilterProcessorGeojsonArn
+      DesiredCount: 1
+      NetworkConfiguration: 
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets: !Ref PublicSubnets
+          SecurityGroups: 
+            - !Ref SecurityGroup
+      LaunchType: FARGATE
+
+  LogSinkService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster:
+        Ref: FargateClusterArn
+      TaskDefinition:
+        Ref: TaskDefLogSinkArn
+      DesiredCount: 1
+      NetworkConfiguration: 
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets: !Ref PublicSubnets
+          SecurityGroups: 
+            - !Ref SecurityGroup
+      LaunchType: FARGATE
+
+  S3SinkService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster:
+        Ref: FargateClusterArn
+      TaskDefinition:
+        Ref: TaskDefS3SinkArn
+      DesiredCount: 1
+      NetworkConfiguration: 
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets: !Ref PublicSubnets
+          SecurityGroups: 
+            - !Ref SecurityGroup
+      LaunchType: FARGATE

@@ -1,6 +1,6 @@
 ---
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Stack to Create ECS Task Definition
+Description: Stack to Create Fargate Task Definition for Backend
 
 Parameters:
   StackName:
