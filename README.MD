@@ -1,3 +1,4 @@
+
 ## 1. Prerequisite
 
 ### 1-1. Java 1.8
@@ -87,7 +88,10 @@ $ mvn clean package
 $ java -jar target/s3-sink-rabbit-2.0.0.BUILD-SNAPSHOT.jar --s3.key-expression="#jsonPath(new String(payload),'$.uuid') + '.json'"  --s3.bucket=/glue-output-ap-northeast-1/geojson --spring.cloud.stream.bindings.input.destination=filtered_geojson --spring.cloud.stream.bindings.input.group=s3 --spring.cloud.stream.bindings.input.contentType=application/json --server.port=8050 --spring.cloud.stream.defaultBinder=rabbit --cloud.aws.region.static=ap-northeast-1 
 ```
 
-### 2-7. Athena query count and data
+### 2-7. Start the stream
+#### Upload the 'data/short_data.csv' to the source s3 bucket to trigger the events
+
+### 2-8. Athena query count and data
 * Use [AWS Glue](https://console.aws.amazon.com/glue/home) to create a table geojson with crawler.
 
 * Use [Amazon Athena](https://console.aws.amazon.com/athena/home) to query exported data.
@@ -97,9 +101,6 @@ select count(*) from geojson
 
 select * from geojson
 ```
-
-### 2-8. Start the stream
-#### Upload the 'data/short_data.csv' to the source s3 bucket to trigger the events
 
 ------
 ## 3. Scale-out test
@@ -210,6 +211,8 @@ $ mvn clean package
 $ java -jar target/s3-sink-rabbit-2.0.0.BUILD-SNAPSHOT.jar --s3.key-expression="#jsonPath(new String(payload),'$.uuid') + '.json'"  --s3.bucket=/glue-output-ap-northeast-1/geojson --spring.cloud.stream.bindings.input.destination=filtered_geojson --spring.cloud.stream.bindings.input.group=s3 --spring.cloud.stream.bindings.input.contentType=application/json --server.port=8050 --spring.cloud.stream.defaultBinder=kinesis --cloud.aws.region.static=ap-northeast-1 
 ```
 
+### 4-8. Start the stream
+#### Upload the 'data/short_data.csv' to the source s3 bucket to trigger the events
 
 ### 4-7. Athena query count and data
 * Use [AWS Glue](https://console.aws.amazon.com/glue/home) to create a table geojson with crawler.
@@ -221,9 +224,6 @@ select count(*) from geojson
 
 select * from geojson
 ```
-
-### 4-8. Start the stream
-#### Upload the 'data/short_data.csv' to the source s3 bucket to trigger the events
 
 ------
 ## 5. Dockerize the Apps
@@ -435,3 +435,36 @@ $ docker push komushi/s3-sink-kinesis
 ------
 ## 6. Deploy to AWS ECS
 
+### 6-1. Create a fargate cluster together with VPC with Console Management
+[Creating a Cluster](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/create_cluster.html)
+
+### 6-2. Deploy resources with CloudFormation Template
+
+![Master Stack](https://cfn-template-group.s3.amazonaws.com/scs-iot/without_route53/master.yaml)
+
+| Parameters          | Value                                             |
+| ------------------- | ------------------------------------------------- |
+| Stack name          | The preferred name without spaces                 |
+| FargateClusterName  | The Fargate Cluster Name created at #6-1          |
+| VpcId               | The VPC created at #6-1                           |
+| PublicSubnets       | The Public Subnets of the VPC created at #6-1     |
+| SecurityGroup       | The ECS Security Group of the VPC created at #6-1 |
+| SourcePath          | The Source S3 Bucket Path to upload the csv file  |
+| DestinationPath     | The Destination Bucket Path to store the result   |
+
+### 6-3. Upload the 'data/long_data.csv' to the source s3 bucket
+#### Check the log of the apps
+#### Scale out the busy apps
+* def-geocoding-processor
+* def-s3-source
+
+### 6-4. Athena query count and data
+* Use [AWS Glue](https://console.aws.amazon.com/glue/home) to create a table geojson with crawler.
+
+* Use [Amazon Athena](https://console.aws.amazon.com/athena/home) to query exported data.
+
+```
+select count(*) from geojson
+
+select * from geojson
+```
