@@ -14,6 +14,13 @@ Parameters:
     Type: AWS::EC2::SecurityGroup::Id
   FargateClusterName:
     Type: String
+    Default: fargate
+  SourcePath:
+    Type: String
+    Default: upload-us-east-1
+  DestinationPath:
+    Type: String
+    Default: /glue-output-us-east-1/geojson
 
 Resources:
   IamStack:
@@ -67,6 +74,8 @@ Resources:
         EcsTaskExecutionRoleArn: !GetAtt IamStack.Outputs.EcsTaskExecutionRoleArn
         ScsTaskRoleArn: !GetAtt IamStack.Outputs.ScsTaskRoleArn
         StackName: !Ref AWS::StackName
+        SourcePath: !Ref SourcePath
+        DestinationPath: !Ref DestinationPath
 
   SvcAppsStack:
     Type: AWS::CloudFormation::Stack

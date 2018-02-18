@@ -11,6 +11,10 @@ Parameters:
     Type: String
   MongoDns:
     Type: String
+  SourcePath:
+    Type: String
+  DestinationPath:
+    Type: String
 
 Resources:
 
@@ -38,7 +42,7 @@ Resources:
           Image: "komushi/s3-source-kinesis"
           Command: 
             - "--server.port=8000"
-            - "--s3.remoteDir=/upload-us-east-1/short_data.csv"
+            - !Sub "--s3.remoteDir=${SourcePath}"
             - "--file.consumer.mode=lines"
             - "--spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1"
             - !Sub "--spring.cloud.stream.bindings.output.destination=s3_lines_${StackName}"
@@ -266,7 +270,7 @@ Resources:
           Command: 
             - "--server.port=8050"
             - "--s3.key-expression=#jsonPath(new String(payload),'$.uuid') + '.json'"
-            - "--s3.bucket=/glue-output-us-east-1/geojson"
+            - !Sub "--s3.bucket=${DestinationPath}"
             - !Sub "--spring.cloud.stream.bindings.input.destination=filtered_geojson_${StackName}"
             - "--spring.cloud.stream.bindings.input.group=s3"
             - "--spring.cloud.stream.bindings.input.contentType=application/json"

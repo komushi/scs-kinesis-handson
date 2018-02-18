@@ -32,7 +32,7 @@ $ cd aws-s3
 $ mvn clean install -PgenerateApps
 $ cd apps/s3-source-rabbit
 $ mvn clean package
-$ java -jar target/s3-source-rabbit-2.0.0.BUILD-SNAPSHOT.jar --s3.remoteDir=/s3exp/short_data.csv --file.consumer.mode=lines --spring.cloud.stream.bindings.output.destination=s3_lines --spring.cloud.stream.bindings.output.contentType=text/plain --server.port=8000 --spring.cloud.stream.defaultBinder=rabbit --cloud.aws.region.static=ap-northeast-1
+$ java -jar target/s3-source-rabbit-2.0.0.BUILD-SNAPSHOT.jar --s3.remoteDir=s3exp --file.consumer.mode=lines --spring.cloud.stream.bindings.output.destination=s3_lines --spring.cloud.stream.bindings.output.contentType=text/plain --server.port=8000 --spring.cloud.stream.defaultBinder=rabbit --cloud.aws.region.static=ap-northeast-1
 ```
 
 ### 2-2. Build filter processor rabbit and run
@@ -104,7 +104,7 @@ select * from geojson
 ------
 ## 3. Scale-out test
 ### 3-1. Start the stream with a data file in a much bigger size.
-#### Rename 'data/long_data.csv' to 'short_data.csv' and upload to the source s3 bucket to trigger the events
+#### Upload the 'data/long_data.csv' to the source s3 bucket to trigger the events
 #### Check the CPU load and th PID of the Java proccesses
 
 ### 3-2. Scale out geocoding processor
@@ -142,7 +142,7 @@ $ java -jar target/scs-processor-geocoding-reverse-2.0.0.BUILD-SNAPSHOT.jar --sp
 ```
 $ cd aws-s3/apps/s3-source-rabbit
 $ mvn clean package
-$ java -jar target/s3-source-rabbit-2.0.0.BUILD-SNAPSHOT.jar --s3.remoteDir=/s3exp/short_data.csv --file.consumer.mode=lines --spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1  --spring.cloud.stream.bindings.output.destination=s3_lines --spring.cloud.stream.bindings.output.contentType=text/plain --server.port=8000 --spring.cloud.stream.defaultBinder=kinesis --cloud.aws.region.static=ap-northeast-1
+$ java -jar target/s3-source-rabbit-2.0.0.BUILD-SNAPSHOT.jar --s3.remoteDir=s3exp --file.consumer.mode=lines --spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1  --spring.cloud.stream.bindings.output.destination=s3_lines --spring.cloud.stream.bindings.output.contentType=text/plain --server.port=8000 --spring.cloud.stream.defaultBinder=kinesis --cloud.aws.region.static=ap-northeast-1
 ```
 
 ### 4-2. Build filter processor kinesis and run
@@ -226,7 +226,7 @@ select * from geojson
 #### Upload the 'data/short_data.csv' to the source s3 bucket to trigger the events
 
 ------
-## 5. Dockerize and deploy to AWS ECS 
+## 5. Dockerize the Apps
 
 ### 5-1. Dockerize aws-s3 source kinesis
 #### Modify 'plugin.configuration.images.image.name' of 'docker-maven-plugin' in 'aws-s3/apps/s3-sink-rabbit/pom.xml' to '<your_docker_hub_id>/s3-source-kinesis'
@@ -431,3 +431,7 @@ $ docker push komushi/log-sink-kinesis
 $ mvn clean package docker:build
 $ docker push komushi/s3-sink-kinesis
 ```
+
+------
+## 6. Deploy to AWS ECS
+
