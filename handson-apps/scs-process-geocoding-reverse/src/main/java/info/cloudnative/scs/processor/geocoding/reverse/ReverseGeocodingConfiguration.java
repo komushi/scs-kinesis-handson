@@ -57,10 +57,19 @@ public class ReverseGeocodingConfiguration {
         String payload = null;
 
         if (payloadObj instanceof String) {
+            logger.trace(String.format("payloadObj is String"));
             payload = payloadObj.toString();
         } else {
+            logger.trace(String.format("payloadObj is byte[]"));
             byte[] bytes = (byte[])payloadObj;
-            payload = new String(bytes);
+            
+            try {
+                payload = new String(bytes, "UTF-8");    
+            }
+            catch (Exception ex) {
+                throw new MessageTransformationException("payloadObj transform failed");
+            }
+            
         }
 
         if (logger.isTraceEnabled()) {

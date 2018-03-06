@@ -21,24 +21,19 @@ $ docker pull komushi/mongo-geojson
 $ docker run -p 27017:27017 komushi/mongo-geojson
 ```
 
-### 1-7. Get flar-file-reader
-```
-docker pull komushi/flat-file-reader
-```
-
 ------
 ## 2. Build and run with RabbitMQ
 
-### 2-1. Build http source rabbit and run
+### 2-1. Build aws-s3 source rabbit and run
 #### Replace 's3exp' with your own bucket to upload the source csv file
 #### Replace 'ap-northeast-1' with your expected region
 ```
-$ git clone https://github.com/spring-cloud-stream-app-starters/http.git
-$ cd http
-$ mvn clean install -PgenerateApps -DskipTests
-$ cd apps/http-source-rabbit
+$ git clone https://github.com/spring-cloud-stream-app-starters/aws-s3.git
+$ cd aws-s3
+$ mvn clean install -PgenerateApps
+$ cd apps/s3-source-rabbit
 $ mvn clean package
-$ java -jar target/http-source-rabbit-2.0.0.BUILD-SNAPSHOT.jar --server.port=8000 --spring.cloud.stream.default.contentType=text/plain --spring.cloud.stream.bindings.output.destination=http_lines --spring.cloud.stream.defaultBinder=rabbit --cloud.aws.region.static=ap-northeast-1
+$ java -jar target/s3-source-rabbit-2.0.0.BUILD-SNAPSHOT.jar --s3.remoteDir=s3exp --file.consumer.mode=lines --spring.cloud.stream.bindings.output.destination=s3_lines --spring.cloud.stream.bindings.output.contentType=text/plain --server.port=8000 --spring.cloud.stream.defaultBinder=rabbit --cloud.aws.region.static=ap-northeast-1
 ```
 
 ### 2-2. Build filter processor rabbit and run
@@ -50,7 +45,7 @@ $ cd filter
 $ mvn clean install -PgenerateApps
 $ cd apps/filter-processor-rabbit
 $ mvn clean package
-$ java -jar target/filter-processor-rabbit-2.0.0.BUILD-SNAPSHOT.jar --filter.expression='payload.length>10'  --spring.cloud.stream.bindings.input.destination=http_lines --spring.cloud.stream.bindings.input.group=filter --spring.cloud.stream.bindings.output.destination=filtered_lines --spring.cloud.stream.bindings.output.contentType=text/plain --server.port=8010 --spring.cloud.stream.defaultBinder=rabbit --cloud.aws.region.static=ap-northeast-1
+$ java -jar target/filter-processor-rabbit-2.0.0.BUILD-SNAPSHOT.jar --filter.expression='payload.length>10'  --spring.cloud.stream.bindings.input.destination=s3_lines --spring.cloud.stream.bindings.input.group=filter --spring.cloud.stream.bindings.output.destination=filtered_lines --spring.cloud.stream.bindings.output.contentType=text/plain --server.port=8010 --spring.cloud.stream.defaultBinder=rabbit --cloud.aws.region.static=ap-northeast-1
 ```
 
 ### 2-3. Build geocoding processor rabbit and run
@@ -94,13 +89,7 @@ $ java -jar target/s3-sink-rabbit-2.0.0.BUILD-SNAPSHOT.jar --s3.key-expression="
 ```
 
 ### 2-7. Start the stream
-```
-curl -H "Content-Type: text/plain" -X POST -d'468244D1361B8A3EB8D206CC394BC9E9,BB899DFEA9CC964B50C540A1D685CCFB,2013-01-01 00:00:00,2013-01-01 00:04:00,240,1.71,139.752268,35.677043,139.771699,35.697283,CSH,6.50,0.50,0.50,0.00,0.00,7.50' 'http://localhost:8000'
-```
-
-```
-docker run komushi/flat-file-reader --url=http://docker.for.mac.localhost:8000
-```
+#### Upload the 'data/short_data.csv' to the source s3 bucket to trigger the events
 
 ### 2-8. Athena query count and data
 * Use [AWS Glue](https://console.aws.amazon.com/glue/home) to create a table geojson with crawler.
@@ -145,15 +134,16 @@ $ java -jar target/scs-processor-geocoding-reverse-2.0.0.BUILD-SNAPSHOT.jar --sp
 <dependency>
     <groupId>org.springframework.cloud</groupId>
     <artifactId>spring-cloud-starter-stream-kinesis</artifactId>
-    <version>1.0.0.M1</version>
+    <version>1.0.0.BUILD-SNAPSHOT</version>
 </dependency>
 ```
 
+#### Replace 's3exp' with your own bucket to upload the source csv file
 #### Replace 'ap-northeast-1' with your expected region
 ```
-$ cd http/apps/http-source-rabbit
+$ cd aws-s3/apps/s3-source-rabbit
 $ mvn clean package
-$ java -jar target/http-source-rabbit-2.0.0.BUILD-SNAPSHOT.jar --server.port=8000 --spring.cloud.stream.default.contentType=text/plain --spring.cloud.stream.bindings.output.destination=http_lines --spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1 --spring.cloud.stream.defaultBinder=kinesis --cloud.aws.region.static=ap-northeast-1
+$ java -jar target/s3-source-rabbit-2.0.0.BUILD-SNAPSHOT.jar --s3.remoteDir=s3exp --file.consumer.mode=lines --spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1  --spring.cloud.stream.bindings.output.destination=s3_lines --spring.cloud.stream.bindings.output.contentType=text/plain --server.port=8000 --spring.cloud.stream.defaultBinder=kinesis --cloud.aws.region.static=ap-northeast-1
 ```
 
 ### 4-2. Build filter processor kinesis and run
@@ -162,7 +152,7 @@ $ java -jar target/http-source-rabbit-2.0.0.BUILD-SNAPSHOT.jar --server.port=800
 <dependency>
     <groupId>org.springframework.cloud</groupId>
     <artifactId>spring-cloud-starter-stream-kinesis</artifactId>
-    <version>1.0.0.M1</version>
+    <version>1.0.0.BUILD-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -170,7 +160,7 @@ $ java -jar target/http-source-rabbit-2.0.0.BUILD-SNAPSHOT.jar --server.port=800
 ```
 $ cd filter/apps/filter-processor-rabbit
 $ mvn clean package
-$ java -jar target/filter-processor-rabbit-2.0.0.BUILD-SNAPSHOT.jar --filter.expression='payload.length>10'  --spring.cloud.stream.bindings.input.destination=http_lines --spring.cloud.stream.bindings.input.group=filter --spring.cloud.stream.bindings.output.destination=filtered_lines --spring.cloud.stream.bindings.output.contentType=text/plain --spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1 --server.port=8010 --spring.cloud.stream.defaultBinder=kinesis --cloud.aws.region.static=ap-northeast-1
+$ java -jar target/filter-processor-rabbit-2.0.0.BUILD-SNAPSHOT.jar --filter.expression='payload.length>10'  --spring.cloud.stream.bindings.input.destination=s3_lines --spring.cloud.stream.bindings.input.group=filter --spring.cloud.stream.bindings.output.destination=filtered_lines --spring.cloud.stream.bindings.output.contentType=text/plain --spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1 --server.port=8010 --spring.cloud.stream.defaultBinder=kinesis --cloud.aws.region.static=ap-northeast-1
 ```
 
 ### 4-3. Run geocoding processor with kinesis
@@ -183,7 +173,7 @@ $ java -jar target/scs-processor-geocoding-reverse-2.0.0.BUILD-SNAPSHOT.jar --sp
 #### Filter json with specified dropoff longitude range
 #### Replace 'ap-northeast-1' with your expected region
 ```
-$ java -jar target/filter-processor-rabbit-2.0.0.BUILD-SNAPSHOT.jar --filter.expression="#jsonPath(new String(payload),'$.dropoffLongitude') < 139.76 && #jsonPath(new String(payload),'$.dropoffLongitude') > 139.74" --spring.cloud.stream.bindings.input.destination=geojson --spring.cloud.stream.bindings.input.group=filter --spring.cloud.stream.bindings.input.contentType=application/json --spring.cloud.stream.bindings.output.destination=filtered_geojson --spring.cloud.stream.bindings.output.contentType=application/json --spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1 --server.port=8030 --spring.cloud.stream.defaultBinder=kinesis --cloud.aws.region.static=ap-northeast-1
+$ java -jar target/filter-processor-rabbit-2.0.0.BUILD-SNAPSHOT.jar --filter.expression="#jsonPath(new String(payload),'$.dropoffLongitude') < 139.76 && #jsonPath(new String(payload),'$.dropoffLongitude') > 139.73" --spring.cloud.stream.bindings.input.destination=geojson --spring.cloud.stream.bindings.input.group=filter --spring.cloud.stream.bindings.input.contentType=application/json --spring.cloud.stream.bindings.output.destination=filtered_geojson --spring.cloud.stream.bindings.output.contentType=application/json --spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1 --server.port=8030 --spring.cloud.stream.defaultBinder=kinesis --cloud.aws.region.static=ap-northeast-1
 ```
 
 ### 4-5. Build log sink kinesis and run
@@ -192,7 +182,7 @@ $ java -jar target/filter-processor-rabbit-2.0.0.BUILD-SNAPSHOT.jar --filter.exp
 <dependency>
     <groupId>org.springframework.cloud</groupId>
     <artifactId>spring-cloud-starter-stream-kinesis</artifactId>
-    <version>1.0.0.M1</version>
+    <version>1.0.0.BUILD-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -209,7 +199,7 @@ $ java -jar target/log-sink-rabbit-2.0.0.BUILD-SNAPSHOT.jar --log.expression="#j
 <dependency>
     <groupId>org.springframework.cloud</groupId>
     <artifactId>spring-cloud-starter-stream-kinesis</artifactId>
-    <version>1.0.0.M1</version>
+    <version>1.0.0.BUILD-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -222,13 +212,7 @@ $ java -jar target/s3-sink-rabbit-2.0.0.BUILD-SNAPSHOT.jar --s3.key-expression="
 ```
 
 ### 4-8. Start the stream
-```
-curl -H "Content-Type: text/plain" -X POST -d'468244D1361B8A3EB8D206CC394BC9E9,BB899DFEA9CC964B50C540A1D685CCFB,2013-01-01 00:00:00,2013-01-01 00:04:00,240,1.71,139.752268,35.677043,139.771699,35.697283,CSH,6.50,0.50,0.50,0.00,0.00,7.50' 'http://localhost:8000'
-```
-
-```
-docker run komushi/flat-file-reader --url=http://docker.for.mac.localhost:8000
-```
+#### Upload the 'data/short_data.csv' to the source s3 bucket to trigger the events
 
 ### 4-7. Athena query count and data
 * Use [AWS Glue](https://console.aws.amazon.com/glue/home) to create a table geojson with crawler.
@@ -245,7 +229,7 @@ select * from geojson
 ## 5. Dockerize the Apps
 
 ### 5-1. Dockerize aws-s3 source kinesis
-#### Modify 'plugin.configuration.images.image.name' of 'docker-maven-plugin' in 'http/apps/http-source-rabbit/pom.xml' to '<your_docker_hub_id>/http-source-kinesis'
+#### Modify 'plugin.configuration.images.image.name' of 'docker-maven-plugin' in 'aws-s3/apps/s3-source-rabbit/pom.xml' to '<your_docker_hub_id>/s3-source-kinesis'
 ```
   <plugin>
     <groupId>io.fabric8</groupId>
@@ -254,7 +238,7 @@ select * from geojson
     <configuration>
       <images>
         <image>
-          <name>komushi/http-source-kinesis</name>
+          <name>komushi/s3-source-kinesis</name>
           <build>
             <from>anapsix/alpine-java:8</from>
             <volumes>
@@ -264,7 +248,7 @@ select * from geojson
               <exec>
                 <arg>java</arg>
                 <arg>-jar</arg>
-                <arg>/maven/http-source-rabbit.jar</arg>
+                <arg>/maven/s3-source-rabbit.jar</arg>
               </exec>
             </entryPoint>
             <assembly>
@@ -281,7 +265,7 @@ select * from geojson
 #### Replace 'komushi' with your your_docker_hub_id
 ```
 $ mvn clean package docker:build
-$ docker push komushi/http-source-kinesis
+$ docker push komushi/s3-source-kinesis
 ```
 
 ### 5-2. Dockerize filter processor kinesis
