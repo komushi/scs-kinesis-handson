@@ -1,0 +1,304 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Stack to Create Fargate Task Definition for Apps
+
+Parameters:
+  StackName:
+    Type: String
+  EcsTaskExecutionRoleArn:
+    Type: String
+  ScsTaskRoleArn:
+    Type: String
+  MongoDns:
+    Type: String
+  DestinationPath:
+    Type: String
+
+Resources:
+
+  LogGroupHttpSource:
+    Type: "AWS::Logs::LogGroup"
+    Properties: 
+      LogGroupName: !Sub /ecs/http-source-${StackName}
+
+  DefHttpSource: 
+    Type: "AWS::ECS::TaskDefinition"
+    Properties: 
+      Family: !Sub def-http-source-${StackName}
+      RequiresCompatibilities:
+        - "FARGATE"
+      ExecutionRoleArn:
+        Ref: EcsTaskExecutionRoleArn
+      Memory: "1024"
+      Cpu: "512"
+      TaskRoleArn:
+        Ref: ScsTaskRoleArn
+      NetworkMode: "awsvpc"
+      ContainerDefinitions: 
+        - 
+          Name: "http-source"
+          Image: "komushi/http-source-kinesis"
+          Command: 
+            - "--server.port=8000"
+            - "--spring.cloud.stream.default.contentType=text/plain"
+            - "--spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1"
+            - !Sub "--spring.cloud.stream.bindings.output.destination=http_lines_${StackName}"
+            - "--spring.cloud.stream.defaultBinder=kinesis"
+            - !Join
+              - ""
+              - - "--cloud.aws.region.static="
+                - !Ref "AWS::Region"
+          Essential: "true"
+          LogConfiguration: 
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref LogGroupHttpSource
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: "ecs"
+
+  LogGroupFilterProcessorLines:
+    Type: "AWS::Logs::LogGroup"
+    Properties: 
+      LogGroupName: !Sub /ecs/filter-processor-lines-${StackName}
+
+  DefFilterProcessorLines: 
+    Type: "AWS::ECS::TaskDefinition"
+    Properties: 
+      Family: !Sub def-filter-processor-lines-${StackName}
+      RequiresCompatibilities:
+        - "FARGATE"
+      ExecutionRoleArn:
+        Ref: EcsTaskExecutionRoleArn
+      Memory: "1024"
+      Cpu: "512"
+      TaskRoleArn:
+        Ref: ScsTaskRoleArn
+      NetworkMode: "awsvpc"
+      ContainerDefinitions: 
+        - 
+          Name: "filter-processor-lines"
+          Image: "komushi/filter-processor-kinesis"
+          Command: 
+            - "--server.port=8010"
+            - "--filter.expression=payload.length>10"
+            - !Sub "--spring.cloud.stream.bindings.input.destination=http_lines_${StackName}"
+            - "--spring.cloud.stream.bindings.input.group=filter"
+            - !Sub "--spring.cloud.stream.bindings.output.destination=filtered_lines_${StackName}"
+            - "--spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1"            
+            - "--spring.cloud.stream.bindings.output.contentType=text/plain"
+            - "--spring.cloud.stream.defaultBinder=kinesis"
+            - !Join
+              - ""
+              - - "--cloud.aws.region.static="
+                - !Ref "AWS::Region"
+          Essential: "true"
+          LogConfiguration: 
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref LogGroupFilterProcessorLines
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: "ecs"
+
+  LogGroupGeocodingProcessor:
+    Type: "AWS::Logs::LogGroup"
+    Properties: 
+      LogGroupName: !Sub /ecs/geocoding-processor-${StackName}
+
+  DefGeocodingProcessor: 
+    Type: "AWS::ECS::TaskDefinition"
+    Properties: 
+      Family: !Sub def-geocoding-processor-${StackName}
+      RequiresCompatibilities:
+        - "FARGATE"
+      ExecutionRoleArn:
+        Ref: EcsTaskExecutionRoleArn
+      Memory: "1024"
+      Cpu: "512"
+      TaskRoleArn:
+        Ref: ScsTaskRoleArn
+      NetworkMode: "awsvpc"
+      ContainerDefinitions: 
+        - 
+          Name: "geocoding-processor"
+          Image: "komushi/geocoding-processor-kinesis"
+          Command: 
+            - "--server.port=8020"
+            - "--spring.cloud.stream.bindings.input.contentType=text/plain"
+            - !Sub "--spring.cloud.stream.bindings.input.destination=filtered_lines_${StackName}"
+            - "--spring.cloud.stream.bindings.input.group=geocoding"
+            - !Sub "--spring.cloud.stream.bindings.output.destination=geojson_${StackName}"
+            - "--spring.cloud.stream.bindings.output.contentType=application/json"
+            - "--spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1"
+            - !Sub "--spring.cloud.stream.kinesis.binder.checkpoint.table=checkpoint-${StackName}"
+            - "--spring.cloud.stream.kinesis.binder.autoAddShards=true"
+            - "--spring.cloud.stream.kinesis.binder.checkpoint.readCapacity=6"
+            - "--spring.cloud.stream.kinesis.binder.checkpoint.writeCapacity=6"
+            - !Join
+              - ""
+              - - "--properties.mongo.hostName="
+                - !Ref MongoDns
+            - "--properties.mongo.port=27017"
+            - "--properties.mongo.database=geojson"
+            - "--properties.mongo.collection=blocks"
+            - "--properties.mongo.user=root"
+            - "--properties.mongo.password=keepitsimple"
+            - "--logging.level.info.cloudnative=TRACE"
+            - "--spring.cloud.stream.defaultBinder=kinesis"
+            - !Join
+              - ""
+              - - "--cloud.aws.region.static="
+                - !Ref "AWS::Region"
+          Essential: "true"
+          LogConfiguration: 
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref LogGroupGeocodingProcessor
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: "ecs"
+
+  LogGroupFilterProcessorGeojson:
+    Type: "AWS::Logs::LogGroup"
+    Properties: 
+      LogGroupName: !Sub /ecs/filter-processor-geojson-${StackName}
+
+  DefFilterProcessorGeojson: 
+    Type: "AWS::ECS::TaskDefinition"
+    Properties: 
+      Family: !Sub def-filter-processor-geojson-${StackName}
+      RequiresCompatibilities:
+        - "FARGATE"
+      ExecutionRoleArn:
+        Ref: EcsTaskExecutionRoleArn
+      Memory: "1024"
+      Cpu: "512"
+      TaskRoleArn:
+        Ref: ScsTaskRoleArn
+      NetworkMode: "awsvpc"
+      ContainerDefinitions: 
+        - 
+          Name: "filter-processor-geojson"
+          Image: "komushi/filter-processor-kinesis"
+          Command: 
+            - "--server.port=8030"
+            - "--filter.expression=#jsonPath(new String(payload),'$.dropoffLongitude') < 139.76 && #jsonPath(new String(payload),'$.dropoffLongitude') > 139.74"
+            - !Sub "--spring.cloud.stream.bindings.input.destination=geojson_${StackName}"
+            - "--spring.cloud.stream.bindings.input.group=filter"
+            - "--spring.cloud.stream.bindings.input.contentType=application/json"
+            - !Sub "--spring.cloud.stream.bindings.output.destination=filtered_geojson_${StackName}"
+            - "--spring.cloud.stream.bindings.output.contentType=application/json"
+            - "--spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1"
+            - "--spring.cloud.stream.defaultBinder=kinesis"
+            - !Join
+              - ""
+              - - "--cloud.aws.region.static="
+                - !Ref "AWS::Region"
+          Essential: "true"
+          LogConfiguration: 
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref LogGroupFilterProcessorGeojson
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: "ecs"
+
+  LogGroupLogSink:
+    Type: "AWS::Logs::LogGroup"
+    Properties: 
+      LogGroupName: !Sub /ecs/log-sink-${StackName}
+
+  DefLogSink: 
+    Type: "AWS::ECS::TaskDefinition"
+    Properties: 
+      Family: !Sub def-log-sink-${StackName}
+      RequiresCompatibilities:
+        - "FARGATE"
+      ExecutionRoleArn:
+        Ref: EcsTaskExecutionRoleArn
+      Memory: "1024"
+      Cpu: "512"
+      TaskRoleArn:
+        Ref: ScsTaskRoleArn
+      NetworkMode: "awsvpc"
+      ContainerDefinitions: 
+        - 
+          Name: "log-sink"
+          Image: "komushi/log-sink-kinesis"
+          Command: 
+            - "--server.port=8040"
+            - "--log.expression=#jsonPath(new String(payload),'$')"
+            - !Sub "--spring.cloud.stream.bindings.input.destination=filtered_geojson_${StackName}"
+            - "--spring.cloud.stream.bindings.input.group=log"
+            - "--spring.cloud.stream.bindings.input.contentType=application/json"
+            - "--spring.cloud.stream.defaultBinder=kinesis"
+            - !Join
+              - ""
+              - - "--cloud.aws.region.static="
+                - !Ref "AWS::Region"
+          Essential: "true"
+          LogConfiguration: 
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref LogGroupLogSink
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: "ecs"
+
+  LogGroupS3Sink:
+    Type: "AWS::Logs::LogGroup"
+    Properties: 
+      LogGroupName: !Sub /ecs/s3-sink-${StackName}
+
+  DefS3Sink: 
+    Type: "AWS::ECS::TaskDefinition"
+    Properties: 
+      Family: !Sub def-s3-sink-${StackName}
+      RequiresCompatibilities:
+        - "FARGATE"
+      ExecutionRoleArn:
+        Ref: EcsTaskExecutionRoleArn
+      Memory: "1024"
+      Cpu: "512"
+      TaskRoleArn:
+        Ref: ScsTaskRoleArn
+      NetworkMode: "awsvpc"
+      ContainerDefinitions: 
+        - 
+          Name: "s3-sink"
+          Image: "komushi/s3-sink-kinesis"
+          Command: 
+            - "--server.port=8050"
+            - "--s3.key-expression=#jsonPath(new String(payload),'$.uuid') + '.json'"
+            - !Sub "--s3.bucket=${DestinationPath}"
+            - !Sub "--spring.cloud.stream.bindings.input.destination=filtered_geojson_${StackName}"
+            - "--spring.cloud.stream.bindings.input.group=s3"
+            - "--spring.cloud.stream.bindings.input.contentType=application/json"
+            - "--spring.cloud.stream.defaultBinder=kinesis"
+            - !Join
+              - ""
+              - - "--cloud.aws.region.static="
+                - !Ref "AWS::Region"
+          Essential: "true"
+          LogConfiguration: 
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref LogGroupS3Sink
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: "ecs"
+
+Outputs:
+  DefHttpSourceArn:
+    Value:
+      Ref: DefHttpSource
+  DefFilterProcessorLinesArn:
+    Value:
+      Ref: DefFilterProcessorLines
+  DefGeocodingProcessorArn:
+    Value:
+      Ref: DefGeocodingProcessor
+  DefFilterProcessorGeojsonArn:
+    Value:
+      Ref: DefFilterProcessorGeojson
+  DefS3SinkArn:
+    Value:
+      Ref: DefS3Sink
+  DefLogSinkArn:
+    Value:
+      Ref: DefLogSink

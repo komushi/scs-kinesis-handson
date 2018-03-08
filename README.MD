@@ -30,7 +30,6 @@ docker pull komushi/flat-file-reader
 ## 2. Build and run with RabbitMQ
 
 ### 2-1. Build http source rabbit and run
-#### Replace 's3exp' with your own bucket to upload the source csv file
 #### Replace 'ap-northeast-1' with your expected region
 ```
 $ git clone https://github.com/spring-cloud-stream-app-starters/http.git
@@ -139,8 +138,8 @@ $ java -jar target/scs-processor-geocoding-reverse-2.0.0.BUILD-SNAPSHOT.jar --sp
 ------
 
 ## 4. Build and run with Kinesis
-### 4-1. Build aws-s3 source rabbit and run
-#### Add Kinesis Binder Dependency in 'aws-s3/apps/s3-source-rabbit/pom.xml'
+### 4-1. Build http source rabbit and run
+#### Add Kinesis Binder Dependency in 'http/apps/http-source-rabbit/pom.xml'
 ```
 <dependency>
     <groupId>org.springframework.cloud</groupId>
@@ -244,7 +243,7 @@ select * from geojson
 ------
 ## 5. Dockerize the Apps
 
-### 5-1. Dockerize aws-s3 source kinesis
+### 5-1. Dockerize http source kinesis
 #### Modify 'plugin.configuration.images.image.name' of 'docker-maven-plugin' in 'http/apps/http-source-rabbit/pom.xml' to '<your_docker_hub_id>/http-source-kinesis'
 ```
   <plugin>

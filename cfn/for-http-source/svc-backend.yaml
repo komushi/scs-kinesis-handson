@@ -1,0 +1,39 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Stack to Create Fargate Service for Backend
+
+Parameters:
+  TargetGroupMongoArn:
+    Type: String
+  TaskDefMongoArn:
+    Type: String
+  FargateClusterArn:
+    Type: String
+  PublicSubnets:
+    Description: Choose the PublicSubnets
+    Type: List<AWS::EC2::Subnet::Id>
+  SecurityGroup:
+    Description: Select the Security Group
+    Type: AWS::EC2::SecurityGroup::Id
+
+Resources:
+  MongoService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster:
+        Ref: FargateClusterArn
+      TaskDefinition:
+        Ref: TaskDefMongoArn
+      DesiredCount: 2
+      LoadBalancers:
+      - TargetGroupArn:
+          Ref: TargetGroupMongoArn
+        ContainerPort: 27017
+        ContainerName: mongo-geojson
+      NetworkConfiguration: 
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets: !Ref PublicSubnets
+          SecurityGroups: 
+            - !Ref SecurityGroup
+      LaunchType: FARGATE
