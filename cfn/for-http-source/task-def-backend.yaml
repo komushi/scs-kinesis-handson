@@ -9,6 +9,8 @@ Parameters:
     Type: String
   ScsTaskRoleArn:
     Type: String
+  NlbDns:
+    Type: String
 
 Resources:
   LogGroupMongo:
@@ -43,6 +45,38 @@ Resources:
             LogDriver: "awslogs"
             Options:
               awslogs-group: !Ref LogGroupMongo
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: "ecs"
+
+  LogGroupFlatFileReader:
+    Type: "AWS::Logs::LogGroup"
+    Properties: 
+      LogGroupName: !Sub /ecs/flat-file-reader-${StackName}
+
+  DefFlatFileReader: 
+    Type: "AWS::ECS::TaskDefinition"
+    Properties: 
+      Family: !Sub def-flat-file-reader-${StackName}
+      RequiresCompatibilities:
+        - "FARGATE"
+      ExecutionRoleArn:
+        Ref: EcsTaskExecutionRoleArn
+      Memory: "1024"
+      Cpu: "512"
+      TaskRoleArn:
+        Ref: ScsTaskRoleArn
+      NetworkMode: "awsvpc"
+      ContainerDefinitions: 
+        - 
+          Name: "flat-file-reader"
+          Image: "komushi/flat-file-reader"
+          Essential: "true"
+          Command: 
+            - !Sub "--url=http://${NlbDns}:8000"
+          LogConfiguration: 
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref LogGroupFlatFileReader
               awslogs-region: !Ref "AWS::Region"
               awslogs-stream-prefix: "ecs"
 

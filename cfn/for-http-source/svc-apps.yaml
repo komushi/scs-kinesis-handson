@@ -3,6 +3,8 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: Stack to Create Fargate Service for Apps
 
 Parameters:
+  TargetGroupHttpArn:
+    Type: String
   TaskDefHttpSourceArn:
     Type: String
   TaskDefFilterProcessorLinesArn:
@@ -32,7 +34,12 @@ Resources:
         Ref: FargateClusterArn
       TaskDefinition:
         Ref: TaskDefHttpSourceArn
-      DesiredCount: 1
+      DesiredCount: 2
+      LoadBalancers:
+      - TargetGroupArn:
+          Ref: TargetGroupHttpArn
+        ContainerPort: 8000
+        ContainerName: http-source
       NetworkConfiguration: 
         AwsvpcConfiguration:
           AssignPublicIp: ENABLED

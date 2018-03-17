@@ -28,6 +28,23 @@ Resources:
       LoadBalancerArn: !Ref NetworkLoadBalancer
       Port: 27017
       Protocol: TCP
+  TargetGroupHttp:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub tg-http-source-${StackName}
+      TargetType: ip
+      VpcId: !Ref VpcId
+      Port: 8000
+      Protocol: TCP
+  ListenerHttp:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroupHttp
+      LoadBalancerArn: !Ref NetworkLoadBalancer
+      Port: 8000
+      Protocol: TCP
   NetworkLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
@@ -42,5 +59,8 @@ Outputs:
   TargetGroupMongoArn: 
     Description: The ARN of the Mongo Target Group
     Value: !Ref TargetGroupMongo
+  TargetGroupHttpArn: 
+    Description: The ARN of the Mongo Target Group
+    Value: !Ref TargetGroupHttp
 
 

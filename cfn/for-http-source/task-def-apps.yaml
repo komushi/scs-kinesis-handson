@@ -9,7 +9,7 @@ Parameters:
     Type: String
   ScsTaskRoleArn:
     Type: String
-  MongoDns:
+  NlbDns:
     Type: String
   DestinationPath:
     Type: String
@@ -40,15 +40,21 @@ Resources:
           Image: "komushi/http-source-kinesis"
           Command: 
             - "--server.port=8000"
-            - "--spring.cloud.stream.default.contentType=text/plain"
-            - "--spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1"
-            - !Sub "--spring.cloud.stream.bindings.output.destination=http_lines_${StackName}"
             - "--spring.cloud.stream.defaultBinder=kinesis"
-            - !Join
-              - ""
-              - - "--cloud.aws.region.static="
-                - !Ref "AWS::Region"
+            - "--spring.cloud.stream.default.contentType=text/plain"
+            - !Sub "--spring.cloud.stream.bindings.output.destination=http_lines_${StackName}"
+            - "--spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1"
+            - !Sub "--spring.cloud.stream.kinesis.binder.checkpoint.table=checkpoint-${StackName}"
+            - "--spring.cloud.stream.kinesis.binder.autoAddShards=true"
+            - "--spring.cloud.stream.kinesis.binder.checkpoint.readCapacity=6"
+            - "--spring.cloud.stream.kinesis.binder.checkpoint.writeCapacity=6"
+            - !Sub "--cloud.aws.region.static=${AWS::Region}"
           Essential: "true"
+          PortMappings:
+            -
+              ContainerPort: 8000
+              HostPort: 8000
+              Protocol: "tcp"
           LogConfiguration: 
             LogDriver: "awslogs"
             Options:
@@ -80,17 +86,20 @@ Resources:
           Image: "komushi/filter-processor-kinesis"
           Command: 
             - "--server.port=8010"
+            - "--spring.cloud.stream.defaultBinder=kinesis"
             - "--filter.expression=payload.length>10"
             - !Sub "--spring.cloud.stream.bindings.input.destination=http_lines_${StackName}"
             - "--spring.cloud.stream.bindings.input.group=filter"
+            - "--spring.cloud.stream.bindings.input.contentType=text/plain"
             - !Sub "--spring.cloud.stream.bindings.output.destination=filtered_lines_${StackName}"
-            - "--spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1"            
             - "--spring.cloud.stream.bindings.output.contentType=text/plain"
-            - "--spring.cloud.stream.defaultBinder=kinesis"
-            - !Join
-              - ""
-              - - "--cloud.aws.region.static="
-                - !Ref "AWS::Region"
+            - "--spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1"            
+            - !Sub "--spring.cloud.stream.kinesis.binder.checkpoint.table=checkpoint-${StackName}"
+            - "--spring.cloud.stream.kinesis.binder.autoAddShards=true"
+            - "--spring.cloud.stream.kinesis.binder.checkpoint.readCapacity=6"
+            - "--spring.cloud.stream.kinesis.binder.checkpoint.writeCapacity=6"
+            - !Sub "--cloud.aws.region.static=${AWS::Region}"
+
           Essential: "true"
           LogConfiguration: 
             LogDriver: "awslogs"
@@ -123,9 +132,10 @@ Resources:
           Image: "komushi/geocoding-processor-kinesis"
           Command: 
             - "--server.port=8020"
-            - "--spring.cloud.stream.bindings.input.contentType=text/plain"
+            - "--spring.cloud.stream.defaultBinder=kinesis"
             - !Sub "--spring.cloud.stream.bindings.input.destination=filtered_lines_${StackName}"
             - "--spring.cloud.stream.bindings.input.group=geocoding"
+            - "--spring.cloud.stream.bindings.input.contentType=text/plain"
             - !Sub "--spring.cloud.stream.bindings.output.destination=geojson_${StackName}"
             - "--spring.cloud.stream.bindings.output.contentType=application/json"
             - "--spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1"
@@ -133,21 +143,14 @@ Resources:
             - "--spring.cloud.stream.kinesis.binder.autoAddShards=true"
             - "--spring.cloud.stream.kinesis.binder.checkpoint.readCapacity=6"
             - "--spring.cloud.stream.kinesis.binder.checkpoint.writeCapacity=6"
-            - !Join
-              - ""
-              - - "--properties.mongo.hostName="
-                - !Ref MongoDns
+            - "--logging.level.info.cloudnative=TRACE"
+            - !Sub "--properties.mongo.hostName=${NlbDns}"
             - "--properties.mongo.port=27017"
             - "--properties.mongo.database=geojson"
             - "--properties.mongo.collection=blocks"
             - "--properties.mongo.user=root"
             - "--properties.mongo.password=keepitsimple"
-            - "--logging.level.info.cloudnative=TRACE"
-            - "--spring.cloud.stream.defaultBinder=kinesis"
-            - !Join
-              - ""
-              - - "--cloud.aws.region.static="
-                - !Ref "AWS::Region"
+            - !Sub "--cloud.aws.region.static=${AWS::Region}"
           Essential: "true"
           LogConfiguration: 
             LogDriver: "awslogs"
@@ -180,6 +183,7 @@ Resources:
           Image: "komushi/filter-processor-kinesis"
           Command: 
             - "--server.port=8030"
+            - "--spring.cloud.stream.defaultBinder=kinesis"
             - "--filter.expression=#jsonPath(new String(payload),'$.dropoffLongitude') < 139.76 && #jsonPath(new String(payload),'$.dropoffLongitude') > 139.74"
             - !Sub "--spring.cloud.stream.bindings.input.destination=geojson_${StackName}"
             - "--spring.cloud.stream.bindings.input.group=filter"
@@ -187,11 +191,11 @@ Resources:
             - !Sub "--spring.cloud.stream.bindings.output.destination=filtered_geojson_${StackName}"
             - "--spring.cloud.stream.bindings.output.contentType=application/json"
             - "--spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1"
-            - "--spring.cloud.stream.defaultBinder=kinesis"
-            - !Join
-              - ""
-              - - "--cloud.aws.region.static="
-                - !Ref "AWS::Region"
+            - !Sub "--spring.cloud.stream.kinesis.binder.checkpoint.table=checkpoint-${StackName}"
+            - "--spring.cloud.stream.kinesis.binder.autoAddShards=true"
+            - "--spring.cloud.stream.kinesis.binder.checkpoint.readCapacity=6"
+            - "--spring.cloud.stream.kinesis.binder.checkpoint.writeCapacity=6"
+            - !Sub "--cloud.aws.region.static=${AWS::Region}"
           Essential: "true"
           LogConfiguration: 
             LogDriver: "awslogs"
@@ -224,15 +228,16 @@ Resources:
           Image: "komushi/log-sink-kinesis"
           Command: 
             - "--server.port=8040"
+            - "--spring.cloud.stream.defaultBinder=kinesis"
             - "--log.expression=#jsonPath(new String(payload),'$')"
             - !Sub "--spring.cloud.stream.bindings.input.destination=filtered_geojson_${StackName}"
             - "--spring.cloud.stream.bindings.input.group=log"
             - "--spring.cloud.stream.bindings.input.contentType=application/json"
-            - "--spring.cloud.stream.defaultBinder=kinesis"
-            - !Join
-              - ""
-              - - "--cloud.aws.region.static="
-                - !Ref "AWS::Region"
+            - !Sub "--spring.cloud.stream.kinesis.binder.checkpoint.table=checkpoint-${StackName}"
+            - "--spring.cloud.stream.kinesis.binder.autoAddShards=true"
+            - "--spring.cloud.stream.kinesis.binder.checkpoint.readCapacity=6"
+            - "--spring.cloud.stream.kinesis.binder.checkpoint.writeCapacity=6"
+            - !Sub "--cloud.aws.region.static=${AWS::Region}"
           Essential: "true"
           LogConfiguration: 
             LogDriver: "awslogs"
@@ -265,16 +270,17 @@ Resources:
           Image: "komushi/s3-sink-kinesis"
           Command: 
             - "--server.port=8050"
+            - "--spring.cloud.stream.defaultBinder=kinesis"
             - "--s3.key-expression=#jsonPath(new String(payload),'$.uuid') + '.json'"
             - !Sub "--s3.bucket=${DestinationPath}"
             - !Sub "--spring.cloud.stream.bindings.input.destination=filtered_geojson_${StackName}"
             - "--spring.cloud.stream.bindings.input.group=s3"
             - "--spring.cloud.stream.bindings.input.contentType=application/json"
-            - "--spring.cloud.stream.defaultBinder=kinesis"
-            - !Join
-              - ""
-              - - "--cloud.aws.region.static="
-                - !Ref "AWS::Region"
+            - !Sub "--spring.cloud.stream.kinesis.binder.checkpoint.table=checkpoint-${StackName}"
+            - "--spring.cloud.stream.kinesis.binder.autoAddShards=true"
+            - "--spring.cloud.stream.kinesis.binder.checkpoint.readCapacity=6"
+            - "--spring.cloud.stream.kinesis.binder.checkpoint.writeCapacity=6"
+            - !Sub "--cloud.aws.region.static=${AWS::Region}"
           Essential: "true"
           LogConfiguration: 
             LogDriver: "awslogs"

@@ -1,5 +1,6 @@
 
 ## 1. Prerequisite
+## 準備
 
 ### 1-1. Java 1.8
 
@@ -28,6 +29,7 @@ docker pull komushi/flat-file-reader
 
 ------
 ## 2. Build and run with RabbitMQ
+## RabbitMQでビルドし、動作確認する
 
 ### 2-1. Build http source rabbit and run
 #### Replace 'ap-northeast-1' with your expected region
@@ -114,6 +116,8 @@ select * from geojson
 
 ------
 ## 3. Scale-out test
+## スケールアウト
+
 ### 3-1. Start the stream with a data file in a much bigger size.
 #### Upload the 'data/long_data.csv' to the source s3 bucket to trigger the events
 #### Check the CPU load and th PID of the Java proccesses
@@ -138,6 +142,8 @@ $ java -jar target/scs-processor-geocoding-reverse-2.0.0.BUILD-SNAPSHOT.jar --sp
 ------
 
 ## 4. Build and run with Kinesis
+## Kinesisでビルドし、動作確認する
+
 ### 4-1. Build http source rabbit and run
 #### Add Kinesis Binder Dependency in 'http/apps/http-source-rabbit/pom.xml'
 ```
@@ -242,6 +248,7 @@ select * from geojson
 
 ------
 ## 5. Dockerize the Apps
+## Spring Cloud Stream アプリケーションをDocker化する
 
 ### 5-1. Dockerize http source kinesis
 #### Modify 'plugin.configuration.images.image.name' of 'docker-maven-plugin' in 'http/apps/http-source-rabbit/pom.xml' to '<your_docker_hub_id>/http-source-kinesis'
@@ -449,14 +456,22 @@ $ docker push komushi/s3-sink-kinesis
 
 ------
 ## 6. Deploy to AWS ECS
+## AWS ECS Fargateに展開する
 
 ### 6-1. Create a fargate cluster with a new VPC with Console Management
 [Creating a Cluster](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/create_cluster.html)
 
-### 6-2. Edit 'ContainerDefinitions.Image' in 'cfn/task-def-apps.yaml'
+### 6-2. Set the default security group inbound rules as below
+
+| Type            | Protocol | Port Range  | Source                      |
+| --------------- | -------- | ----------- | --------------------------- |
+| Custom TCP Rule | TCP      | 8000        | 0.0.0.0/0                   |
+| Custom TCP Rule | TCP      | 27017       | 0.0.0.0/0                   |
+
+### 6-3. Edit 'ContainerDefinitions.Image' in 'cfn/task-def-apps.yaml'
 #### Replace 'komushi' with your your_docker_hub_id
 
-### 6-3. Deploy resources with CloudFormation Template
+### 6-4. Deploy resources with CloudFormation Template
 ![Master Stack](cfn/master.yaml)
 
 | Parameters          | Value                                             |
@@ -466,16 +481,15 @@ $ docker push komushi/s3-sink-kinesis
 | VpcId               | The VPC created at #6-1                           |
 | PublicSubnets       | The Public Subnets of the VPC created at #6-1     |
 | SecurityGroup       | The ECS Security Group of the VPC created at #6-1 |
-| SourcePath          | The Source S3 Bucket Path to upload the csv file  |
 | DestinationPath     | The Destination Bucket Path to store the result   |
 
-### 6-4. Upload the 'data/long_data.csv' to the source s3 bucket
+### 6-5. Start a new ECS task using def-flat-file-reader
 #### Check the log of the apps
 #### Scale out the busy apps
 * def-geocoding-processor
-* def-s3-source
+* def-http-source
 
-### 6-5. Athena query count and data
+### 6-6. Athena query count and data
 * Use [AWS Glue](https://console.aws.amazon.com/glue/home) to create a table geojson with crawler.
 * Use [Amazon Athena](https://console.aws.amazon.com/athena/home) to query exported data.
 
