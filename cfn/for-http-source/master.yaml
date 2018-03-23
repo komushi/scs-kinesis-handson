@@ -23,12 +23,12 @@ Resources:
   IamStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-kinesis-handson/iam.yaml
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-kinesis-handson/for-http-source/iam.yaml
 
   NlbStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-kinesis-handson/nlb.yaml
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-kinesis-handson/for-http-source/nlb.yaml
       Parameters:
         VpcId: !Ref VpcId
         PublicSubnets: !Join [ ",", !Ref PublicSubnets ]
@@ -37,7 +37,7 @@ Resources:
   TaskDefBackendStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-kinesis-handson/task-def-backend.yaml
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-kinesis-handson/for-http-source/task-def-backend.yaml
       Parameters:
         EcsTaskExecutionRoleArn: !GetAtt IamStack.Outputs.EcsTaskExecutionRoleArn
         ScsTaskRoleArn: !GetAtt IamStack.Outputs.ScsTaskRoleArn
@@ -47,7 +47,7 @@ Resources:
   TaskDefAppsStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-kinesis-handson/task-def-apps.yaml
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-kinesis-handson/for-http-source/task-def-apps.yaml
       Parameters:
         NlbDns: !GetAtt NlbStack.Outputs.LoadBalancerDns
         EcsTaskExecutionRoleArn: !GetAtt IamStack.Outputs.EcsTaskExecutionRoleArn
@@ -58,7 +58,7 @@ Resources:
   SvcBackendStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-kinesis-handson/svc-backend.yaml
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-kinesis-handson/for-http-source/svc-backend.yaml
       Parameters:
         TargetGroupMongoArn: !GetAtt NlbStack.Outputs.TargetGroupMongoArn
         TaskDefMongoArn: !GetAtt TaskDefBackendStack.Outputs.DefMongoArn
@@ -78,7 +78,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: SvcBackendStack
     Properties:
-      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-kinesis-handson/svc-apps.yaml
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-kinesis-handson/for-http-source/svc-apps.yaml
       Parameters:
         TargetGroupHttpArn: !GetAtt NlbStack.Outputs.TargetGroupHttpArn
         TaskDefHttpSourceArn: !GetAtt TaskDefAppsStack.Outputs.DefHttpSourceArn

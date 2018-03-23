@@ -26,12 +26,12 @@ Resources:
   IamStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-kinesis-handson/iam.yaml
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-kinesis-handson/for-s3-source/iam.yaml
 
   TaskDefBackendStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-kinesis-handson/task-def-backend.yaml
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-kinesis-handson/for-s3-source/task-def-backend.yaml
       Parameters:
         EcsTaskExecutionRoleArn: !GetAtt IamStack.Outputs.EcsTaskExecutionRoleArn
         ScsTaskRoleArn: !GetAtt IamStack.Outputs.ScsTaskRoleArn
@@ -40,7 +40,7 @@ Resources:
   NlbStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-kinesis-handson/nlb.yaml
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-kinesis-handson/for-s3-source/nlb.yaml
       Parameters:
         VpcId: !Ref VpcId
         PublicSubnets: !Join [ ",", !Ref PublicSubnets ]
@@ -49,7 +49,7 @@ Resources:
   SvcBackendStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-kinesis-handson/svc-backend.yaml
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-kinesis-handson/for-s3-source/svc-backend.yaml
       Parameters:
         TaskDefMongoArn: !GetAtt TaskDefBackendStack.Outputs.DefMongoArn
         TargetGroupMongoArn: !GetAtt NlbStack.Outputs.TargetGroupMongoArn
@@ -68,7 +68,7 @@ Resources:
   TaskDefAppsStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-kinesis-handson/task-def-apps.yaml
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-kinesis-handson/for-s3-source/task-def-apps.yaml
       Parameters:
         MongoDns: !GetAtt NlbStack.Outputs.LoadBalancerDns
         EcsTaskExecutionRoleArn: !GetAtt IamStack.Outputs.EcsTaskExecutionRoleArn
@@ -81,7 +81,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: SvcBackendStack
     Properties:
-      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-kinesis-handson/svc-apps.yaml
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-kinesis-handson/for-s3-source/svc-apps.yaml
       Parameters:
         TaskDefS3SourceArn: !GetAtt TaskDefAppsStack.Outputs.DefS3SourceArn
         TaskDefFilterProcessorLinesArn: !GetAtt TaskDefAppsStack.Outputs.DefFilterProcessorLinesArn

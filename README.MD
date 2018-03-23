@@ -36,7 +36,7 @@ docker pull komushi/flat-file-reader
 ```
 $ git clone https://github.com/spring-cloud-stream-app-starters/http.git
 $ cd http
-$ mvn clean install -PgenerateApps -DskipTests
+$ mvn clean install -PgenerateApps
 $ cd apps/http-source-rabbit
 $ mvn clean package
 $ java -jar target/http-source-rabbit-2.0.0.BUILD-SNAPSHOT.jar --server.port=8000 --spring.cloud.stream.default.contentType=text/plain --spring.cloud.stream.bindings.output.destination=http_lines --spring.cloud.stream.defaultBinder=rabbit --cloud.aws.region.static=ap-northeast-1
@@ -338,7 +338,7 @@ $ docker push komushi/filter-processor-kinesis
   <plugin>
     <groupId>io.fabric8</groupId>
     <artifactId>docker-maven-plugin</artifactId>
-    <version>0.23.0</version>
+    <version>0.14.2</version>
     <configuration>
       <images>
         <image>
