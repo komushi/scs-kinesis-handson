@@ -150,7 +150,7 @@ $ java -jar target/scs-processor-geocoding-reverse-2.0.0.BUILD-SNAPSHOT.jar --sp
 <dependency>
     <groupId>org.springframework.cloud</groupId>
     <artifactId>spring-cloud-starter-stream-kinesis</artifactId>
-    <version>1.0.0.M1</version>
+    <version>1.0.0.BUILD-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -167,7 +167,7 @@ $ java -jar target/http-source-rabbit-2.0.0.BUILD-SNAPSHOT.jar --server.port=800
 <dependency>
     <groupId>org.springframework.cloud</groupId>
     <artifactId>spring-cloud-starter-stream-kinesis</artifactId>
-    <version>1.0.0.M1</version>
+    <version>1.0.0.BUILD-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -197,7 +197,7 @@ $ java -jar target/filter-processor-rabbit-2.0.0.BUILD-SNAPSHOT.jar --filter.exp
 <dependency>
     <groupId>org.springframework.cloud</groupId>
     <artifactId>spring-cloud-starter-stream-kinesis</artifactId>
-    <version>1.0.0.M1</version>
+    <version>1.0.0.BUILD-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -214,7 +214,7 @@ $ java -jar target/log-sink-rabbit-2.0.0.BUILD-SNAPSHOT.jar --log.expression="#j
 <dependency>
     <groupId>org.springframework.cloud</groupId>
     <artifactId>spring-cloud-starter-stream-kinesis</artifactId>
-    <version>1.0.0.M1</version>
+    <version>1.0.0.BUILD-SNAPSHOT</version>
 </dependency>
 ```
 
