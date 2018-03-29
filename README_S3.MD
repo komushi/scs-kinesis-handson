@@ -21,6 +21,11 @@ $ docker pull komushi/mongo-geojson
 $ docker run -p 27017:27017 komushi/mongo-geojson
 ```
 
+### 1-7. Clone this repo
+```
+$ git clone https://github.com/komushi/scs-kinesis-handson.git
+```
+
 ------
 ## 2. Build and run with RabbitMQ
 
@@ -33,7 +38,7 @@ $ cd aws-s3
 $ mvn clean install -PgenerateApps
 $ cd apps/s3-source-rabbit
 $ mvn clean package
-$ java -jar target/s3-source-rabbit-2.0.0.BUILD-SNAPSHOT.jar --s3.remoteDir=s3exp --file.consumer.mode=lines --spring.cloud.stream.bindings.output.destination=s3_lines --spring.cloud.stream.bindings.output.contentType=text/plain --server.port=8000 --spring.cloud.stream.defaultBinder=rabbit --cloud.aws.region.static=ap-northeast-1
+$ java -jar target/s3-source-rabbit-2.0.0.BUILD-SNAPSHOT.jar --s3.remoteDir=s3exp --file.consumer.mode=lines --spring.cloud.stream.bindings.output.destination=s3_lines --spring.cloud.stream.bindings.output.contentType=text/plain --server.port=8000 --spring.cloud.stream.defaultBinder=rabbit
 ```
 
 ### 2-2. Build filter processor rabbit and run
@@ -45,7 +50,7 @@ $ cd filter
 $ mvn clean install -PgenerateApps
 $ cd apps/filter-processor-rabbit
 $ mvn clean package
-$ java -jar target/filter-processor-rabbit-2.0.0.BUILD-SNAPSHOT.jar --filter.expression='payload.length>10'  --spring.cloud.stream.bindings.input.destination=s3_lines --spring.cloud.stream.bindings.input.group=filter --spring.cloud.stream.bindings.output.destination=filtered_lines --spring.cloud.stream.bindings.output.contentType=text/plain --server.port=8010 --spring.cloud.stream.defaultBinder=rabbit --cloud.aws.region.static=ap-northeast-1
+$ java -jar target/filter-processor-rabbit-2.0.0.BUILD-SNAPSHOT.jar --filter.expression='payload.length>10'  --spring.cloud.stream.bindings.input.destination=s3_lines --spring.cloud.stream.bindings.input.group=filter --spring.cloud.stream.bindings.output.destination=filtered_lines --spring.cloud.stream.bindings.output.contentType=text/plain --server.port=8010 --spring.cloud.stream.defaultBinder=rabbit
 ```
 
 ### 2-3. Build geocoding processor rabbit and run
@@ -53,7 +58,7 @@ $ java -jar target/filter-processor-rabbit-2.0.0.BUILD-SNAPSHOT.jar --filter.exp
 #### Replace 'ap-northeast-1' with your expected region
 ```
 $ cd scs-process-geocoding-reverse
-$ mcn clean package
+$ mvn clean package
 $ java -jar target/scs-processor-geocoding-reverse-2.0.0.BUILD-SNAPSHOT.jar --spring.cloud.stream.bindings.input.contentType=text/plain --spring.cloud.stream.bindings.input.destination=filtered_lines --spring.cloud.stream.bindings.input.group=geocoding --spring.cloud.stream.bindings.output.destination=geojson --spring.cloud.stream.bindings.output.contentType=application/json --properties.mongo.hostName=localhost --properties.mongo.port=27017 --properties.mongo.database=geojson --properties.mongo.collection=blocks --properties.mongo.user=root --properties.mongo.password=keepitsimple --logging.level.info.cloudnative=TRACE --server.port=8020 --spring.cloud.stream.defaultBinder=rabbit --cloud.aws.region.static=ap-northeast-1
 ```
 
@@ -61,7 +66,7 @@ $ java -jar target/scs-processor-geocoding-reverse-2.0.0.BUILD-SNAPSHOT.jar --sp
 #### Filter json with specified dropoff longitude range
 #### Replace 'ap-northeast-1' with your expected region
 ```
-$ java -jar target/filter-processor-rabbit-2.0.0.BUILD-SNAPSHOT.jar --filter.expression="#jsonPath(new String(payload),'$.dropoffLongitude') < 139.76 && #jsonPath(new String(payload),'$.dropoffLongitude') > 139.74" --spring.cloud.stream.bindings.input.destination=geojson --spring.cloud.stream.bindings.input.group=filter --spring.cloud.stream.bindings.input.contentType=application/json --spring.cloud.stream.bindings.output.destination=filtered_geojson --spring.cloud.stream.bindings.output.contentType=application/json --server.port=8030 --spring.cloud.stream.defaultBinder=rabbit --cloud.aws.region.static=ap-northeast-1
+$ java -jar target/filter-processor-rabbit-2.0.0.BUILD-SNAPSHOT.jar --filter.expression="#jsonPath(new String(payload),'$.dropoffLongitude') < 139.76 && #jsonPath(new String(payload),'$.dropoffLongitude') > 139.74" --spring.cloud.stream.bindings.input.destination=geojson --spring.cloud.stream.bindings.input.group=filter --spring.cloud.stream.bindings.input.contentType=application/json --spring.cloud.stream.bindings.output.destination=filtered_geojson --spring.cloud.stream.bindings.output.contentType=application/json --server.port=8030 --spring.cloud.stream.defaultBinder=rabbit
 ```
 
 ### 2-5. Build log sink rabbit and run
@@ -73,7 +78,7 @@ $ cd log
 $ mvn clean install -PgenerateApps
 $ cd apps/log-sink-rabbit
 $ mvn clean package
-$ java -jar target/log-sink-rabbit-2.0.0.BUILD-SNAPSHOT.jar --log.expression="#jsonPath(new String(payload),'$')" --spring.cloud.stream.bindings.input.destination=filtered_geojson --spring.cloud.stream.bindings.input.group=log --spring.cloud.stream.bindings.input.contentType=application/json --server.port=8040 --spring.cloud.stream.defaultBinder=rabbit --cloud.aws.region.static=ap-northeast-1 
+$ java -jar target/log-sink-rabbit-2.0.0.BUILD-SNAPSHOT.jar --log.expression="#jsonPath(new String(payload),'$')" --spring.cloud.stream.bindings.input.destination=filtered_geojson --spring.cloud.stream.bindings.input.group=log --spring.cloud.stream.bindings.input.contentType=application/json --server.port=8040 --spring.cloud.stream.defaultBinder=rabbit
 ```
 
 ### 2-6. Build aws-s3 sink rabbit and run
@@ -85,7 +90,7 @@ $ cd aws-s3
 $ mvn clean install -PgenerateApps
 $ cd apps/s3-sink-rabbit
 $ mvn clean package
-$ java -jar target/s3-sink-rabbit-2.0.0.BUILD-SNAPSHOT.jar --s3.key-expression="#jsonPath(new String(payload),'$.uuid') + '.json'"  --s3.bucket=/glue-output-ap-northeast-1/geojson --spring.cloud.stream.bindings.input.destination=filtered_geojson --spring.cloud.stream.bindings.input.group=s3 --spring.cloud.stream.bindings.input.contentType=application/json --server.port=8050 --spring.cloud.stream.defaultBinder=rabbit --cloud.aws.region.static=ap-northeast-1 
+$ java -jar target/s3-sink-rabbit-2.0.0.BUILD-SNAPSHOT.jar --s3.key-expression="#jsonPath(new String(payload),'$.uuid') + '.json'"  --s3.bucket=/glue-output-ap-northeast-1/geojson --spring.cloud.stream.bindings.input.destination=filtered_geojson --spring.cloud.stream.bindings.input.group=s3 --spring.cloud.stream.bindings.input.contentType=application/json --server.port=8050 --spring.cloud.stream.defaultBinder=rabbit
 ```
 
 ### 2-7. Start the stream
