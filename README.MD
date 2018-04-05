@@ -64,7 +64,7 @@ $ java -jar target/filter-processor-rabbit-2.0.0.BUILD-SNAPSHOT.jar --filter.exp
 #### Replace 'ap-northeast-1' with your expected region
 ```
 $ cd scs-process-geocoding-reverse
-$ mcn clean package
+$ mvn clean package
 $ java -jar target/scs-processor-geocoding-reverse-2.0.0.BUILD-SNAPSHOT.jar --spring.cloud.stream.bindings.input.contentType=text/plain --spring.cloud.stream.bindings.input.destination=filtered_lines --spring.cloud.stream.bindings.input.group=geocoding --spring.cloud.stream.bindings.output.destination=geojson --spring.cloud.stream.bindings.output.contentType=application/json --properties.mongo.hostName=localhost --properties.mongo.port=27017 --properties.mongo.database=geojson --properties.mongo.collection=blocks --properties.mongo.user=root --properties.mongo.password=keepitsimple --logging.level.info.cloudnative=TRACE --server.port=8020 --spring.cloud.stream.defaultBinder=rabbit --cloud.aws.region.static=ap-northeast-1
 ```
 
