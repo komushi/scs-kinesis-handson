@@ -43,7 +43,6 @@ $ java -jar target/s3-source-rabbit-2.0.0.BUILD-SNAPSHOT.jar --s3.remoteDir=s3ex
 
 ### 2-2. Build filter processor rabbit and run
 #### Only accept lines more than 10-digit
-#### Replace 'ap-northeast-1' with your expected region
 ```
 $ git clone https://github.com/spring-cloud-stream-app-starters/filter.git
 $ cd filter
@@ -64,14 +63,14 @@ $ java -jar target/scs-processor-geocoding-reverse-2.0.0.BUILD-SNAPSHOT.jar --sp
 
 ### 2-4. Run a second filter processor rabbit
 #### Filter json with specified dropoff longitude range
-#### Replace 'ap-northeast-1' with your expected region
+#### Go to the folder created at 2-2
 ```
+$ cd filter/apps/filter-processor-rabbit
 $ java -jar target/filter-processor-rabbit-2.0.0.BUILD-SNAPSHOT.jar --filter.expression="#jsonPath(new String(payload),'$.dropoffLongitude') < 139.76 && #jsonPath(new String(payload),'$.dropoffLongitude') > 139.74" --spring.cloud.stream.bindings.input.destination=geojson --spring.cloud.stream.bindings.input.group=filter --spring.cloud.stream.bindings.input.contentType=application/json --spring.cloud.stream.bindings.output.destination=filtered_geojson --spring.cloud.stream.bindings.output.contentType=application/json --server.port=8030 --spring.cloud.stream.defaultBinder=rabbit
 ```
 
 ### 2-5. Build log sink rabbit and run
 #### Export filtered data to log
-#### Replace 'ap-northeast-1' with your expected region
 ```
 $ git clone https://github.com/spring-cloud-stream-app-starters/log.git
 $ cd log
