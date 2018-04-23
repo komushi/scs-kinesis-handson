@@ -231,6 +231,10 @@ select * from geojson
 
 ------
 ## 5. Dockerize the Apps
+#### Docker Hub Login
+```
+docker login
+```
 
 ### 5-1. Dockerize aws-s3 source kinesis
 #### Modify 'plugin.configuration.images.image.name' of 'docker-maven-plugin' in 'aws-s3/apps/s3-source-rabbit/pom.xml' to '<your_docker_hub_id>/s3-source-kinesis'
@@ -442,11 +446,11 @@ $ docker push komushi/s3-sink-kinesis
 ### 6-1. Create a fargate cluster with a new VPC with Console Management
 [Creating a Cluster](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/create_cluster.html)
 
-### 6-2. Edit 'ContainerDefinitions.Image' in 'cfn/task-def-apps.yaml'
+### 6-2. Edit 'ContainerDefinitions.Image' in 'cfn/for-s3-source/task-def-apps.yaml'
 #### Replace 'komushi' with your your_docker_hub_id
 
 ### 6-3. Deploy resources with CloudFormation Template
-![Master Stack](cfn/master.yaml)
+![Master Stack](cfn/for-s3-source/master.yaml)
 
 | Parameters          | Value                                             |
 | ------------------- | ------------------------------------------------- |

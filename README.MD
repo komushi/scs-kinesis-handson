@@ -22,7 +22,7 @@ $ docker pull komushi/mongo-geojson
 $ docker run -p 27017:27017 komushi/mongo-geojson
 ```
 
-### 1-7. Get flar-file-reader
+### 1-7. Get flat-file-reader
 ```
 $ docker pull komushi/flat-file-reader
 ```
@@ -252,6 +252,10 @@ select * from geojson
 ------
 ## 5. Dockerize the Apps
 ## Spring Cloud Stream アプリケーションをDocker化する
+#### Docker Hub Login
+```
+docker login
+```
 
 ### 5-1. Dockerize http source kinesis
 #### Modify 'plugin.configuration.images.image.name' of 'docker-maven-plugin' in 'http/apps/http-source-rabbit/pom.xml' to '<your_docker_hub_id>/http-source-kinesis'
@@ -471,11 +475,11 @@ $ docker push komushi/s3-sink-kinesis
 | Custom TCP Rule | TCP      | 8000        | 0.0.0.0/0                   |
 | Custom TCP Rule | TCP      | 27017       | 0.0.0.0/0                   |
 
-### 6-3. Edit 'ContainerDefinitions.Image' in 'cfn/task-def-apps.yaml'
+### 6-3. Edit 'ContainerDefinitions.Image' in 'cfn/for-http-source/task-def-apps.yaml'
 #### Replace 'komushi' with your your_docker_hub_id
 
 ### 6-4. Deploy resources with CloudFormation Template
-![Master Stack](cfn/master.yaml)
+![Master Stack](cfn/for-http-source/master.yaml)
 
 | Parameters          | Value                                             |
 | ------------------- | ------------------------------------------------- |
