@@ -478,7 +478,10 @@ $ docker push komushi/s3-sink-kinesis
 ### 6-3. Edit 'ContainerDefinitions.Image' in 'cfn/for-http-source/task-def-apps.yaml'
 #### Replace 'komushi' with your your_docker_hub_id
 
-### 6-4. Deploy resources with CloudFormation Template
+### 6-4. Edit TemplateURL in 'cfn/for-http-source/master.yaml'
+#### Replace with your template URL
+
+### 6-5. Deploy resources with CloudFormation Template
 ![Master Stack](cfn/for-http-source/master.yaml)
 
 | Parameters          | Value                                             |
@@ -490,13 +493,13 @@ $ docker push komushi/s3-sink-kinesis
 | SecurityGroup       | The ECS Security Group of the VPC created at #6-1 |
 | DestinationPath     | The Destination Bucket Path to store the result   |
 
-### 6-5. Start a new ECS task using def-flat-file-reader
+### 6-6. Start a new ECS task using def-flat-file-reader
 #### Check the log of the apps
 #### Scale out the busy apps
 * def-geocoding-processor
 * def-http-source
 
-### 6-6. Athena query count and data
+### 6-7. Athena query count and data
 * Use [AWS Glue](https://console.aws.amazon.com/glue/home) to create a table geojson with crawler.
 * Use [Amazon Athena](https://console.aws.amazon.com/athena/home) to query exported data.
 
