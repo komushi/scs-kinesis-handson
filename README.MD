@@ -44,7 +44,7 @@ $ cd http
 $ mvn clean install -PgenerateApps
 $ cd apps/http-source-rabbit
 $ mvn clean package
-$ java -jar target/http-source-rabbit-2.0.0.BUILD-SNAPSHOT.jar --server.port=8000 --spring.cloud.stream.default.contentType=text/plain --spring.cloud.stream.bindings.output.destination=http_lines --spring.cloud.stream.defaultBinder=rabbit --spring.rabbitmq.host=192.168.99.100
+$ java -jar target/http-source-rabbit-2.0.0.BUILD-SNAPSHOT.jar --server.port=8000 --spring.cloud.stream.default.contentType=text/plain --spring.cloud.stream.bindings.output.destination=http_lines --spring.cloud.stream.defaultBinder=rabbit
 ```
 
 #### Docker Toolbox for Windows
@@ -54,11 +54,12 @@ $ cd http
 $ mvn clean install -PgenerateApps
 $ cd apps/http-source-rabbit
 $ mvn clean package
-$ java -jar target/http-source-rabbit-2.0.0.BUILD-SNAPSHOT.jar --server.port=8000 --spring.cloud.stream.default.contentType=text/plain --spring.cloud.stream.bindings.output.destination=http_lines --spring.cloud.stream.defaultBinder=rabbit
+$ java -jar target/http-source-rabbit-2.0.0.BUILD-SNAPSHOT.jar --server.port=8000 --spring.cloud.stream.default.contentType=text/plain --spring.cloud.stream.bindings.output.destination=http_lines --spring.cloud.stream.defaultBinder=rabbit --spring.rabbitmq.host=192.168.99.100
 ```
 
 ### 2-2. Build filter processor rabbit and run
 #### Only accept lines more than 10-digit
+#### Docker for Mac or Windows
 ```
 $ git clone https://github.com/spring-cloud-stream-app-starters/filter.git
 $ cd filter
@@ -68,13 +69,31 @@ $ mvn clean package
 $ java -jar target/filter-processor-rabbit-2.0.0.BUILD-SNAPSHOT.jar --filter.expression='payload.length>10'  --spring.cloud.stream.bindings.input.destination=http_lines --spring.cloud.stream.bindings.input.group=filter --spring.cloud.stream.bindings.output.destination=filtered_lines --spring.cloud.stream.bindings.output.contentType=text/plain --server.port=8010 --spring.cloud.stream.defaultBinder=rabbit
 ```
 
+#### Docker Toolbox for Windows
+```
+$ git clone https://github.com/spring-cloud-stream-app-starters/filter.git
+$ cd filter
+$ mvn clean install -PgenerateApps
+$ cd apps/filter-processor-rabbit
+$ mvn clean package
+$ java -jar target/filter-processor-rabbit-2.0.0.BUILD-SNAPSHOT.jar --filter.expression='payload.length>10'  --spring.cloud.stream.bindings.input.destination=http_lines --spring.cloud.stream.bindings.input.group=filter --spring.cloud.stream.bindings.output.destination=filtered_lines --spring.cloud.stream.bindings.output.contentType=text/plain --server.port=8010 --spring.cloud.stream.defaultBinder=rabbit --spring.rabbitmq.host=192.168.99.100
+```
+
 ### 2-3. Build geocoding processor rabbit and run
 #### Convert lines to json data
 #### Replace 'ap-northeast-1' with your expected region
+#### Docker for Mac or Windows
 ```
 $ cd scs-process-geocoding-reverse
 $ mvn clean package
 $ java -jar target/scs-processor-geocoding-reverse-2.0.0.BUILD-SNAPSHOT.jar --spring.cloud.stream.bindings.input.contentType=text/plain --spring.cloud.stream.bindings.input.destination=filtered_lines --spring.cloud.stream.bindings.input.group=geocoding --spring.cloud.stream.bindings.output.destination=geojson --spring.cloud.stream.bindings.output.contentType=application/json --properties.mongo.hostName=localhost --properties.mongo.port=27017 --properties.mongo.database=geojson --properties.mongo.collection=blocks --properties.mongo.user=root --properties.mongo.password=keepitsimple --logging.level.info.cloudnative=TRACE --server.port=8020 --spring.cloud.stream.defaultBinder=rabbit --cloud.aws.region.static=ap-northeast-1
+```
+
+#### Docker Toolbox for Windows
+```
+$ cd scs-process-geocoding-reverse
+$ mvn clean package
+$ java -jar target/scs-processor-geocoding-reverse-2.0.0.BUILD-SNAPSHOT.jar --spring.cloud.stream.bindings.input.contentType=text/plain --spring.cloud.stream.bindings.input.destination=filtered_lines --spring.cloud.stream.bindings.input.group=geocoding --spring.cloud.stream.bindings.output.destination=geojson --spring.cloud.stream.bindings.output.contentType=application/json --properties.mongo.hostName=192.168.99.100 --properties.mongo.port=27017 --properties.mongo.database=geojson --properties.mongo.collection=blocks --properties.mongo.user=root --properties.mongo.password=keepitsimple --logging.level.info.cloudnative=TRACE --server.port=8020 --spring.cloud.stream.defaultBinder=rabbit --cloud.aws.region.static=ap-northeast-1 --spring.rabbitmq.host=192.168.99.100
 ```
 
 ### 2-4. Run a second filter processor rabbit
