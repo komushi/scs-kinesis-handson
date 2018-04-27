@@ -449,7 +449,11 @@ $ docker push komushi/s3-sink-kinesis
 ### 6-2. Edit 'ContainerDefinitions.Image' in 'cfn/for-s3-source/task-def-apps.yaml'
 #### Replace 'komushi' with your your_docker_hub_id
 
-### 6-3. Deploy resources with CloudFormation Template
+
+### 6-3. Edit TemplateURL in 'cfn/for-http-source/master.yaml'
+#### Replace with your template URL
+
+### 6-4. Deploy resources with CloudFormation Template
 ![Master Stack](cfn/for-s3-source/master.yaml)
 
 | Parameters          | Value                                             |
@@ -462,9 +466,6 @@ $ docker push komushi/s3-sink-kinesis
 | SourcePath          | The Source S3 Bucket Path to upload the csv file  |
 | DestinationPath     | The Destination Bucket Path to store the result   |
 
-### 6-4. Edit TemplateURL in 'cfn/for-http-source/master.yaml'
-#### Replace with your template URL
-
 ### 6-5. Upload the 'data/long_data.csv' to the source s3 bucket
 #### Check the log of the apps
 #### Scale out the busy apps
@@ -472,8 +473,8 @@ $ docker push komushi/s3-sink-kinesis
 * def-s3-source
 
 ### 6-6. Athena query count and data
-* Use [AWS Glue](https://console.aws.amazon.com/glue/home) to create a table geojson with crawler.
-* Use [Amazon Athena](https://console.aws.amazon.com/athena/home) to query exported data.
+* Use [AWS Glue](https://console.aws.amazon.com/glue/home) to create a table geojson with crawler. [Tutorial/Guide](https://docs.aws.amazon.com/glue/latest/dg/console-crawlers.html)
+* Use [Amazon Athena](https://console.aws.amazon.com/athena/home) to query exported data. [Tutorial/Guide Step3 Only](https://docs.aws.amazon.com/athena/latest/ug/getting-started.html)
 
 ```
 select count(*) from geojson

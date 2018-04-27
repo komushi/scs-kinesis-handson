@@ -37,6 +37,17 @@ $ git clone https://github.com/komushi/scs-kinesis-handson.git
 ## RabbitMQでビルドし、動作確認する
 
 ### 2-1. Build http source rabbit and run
+#### Docker for Mac or Windows
+```
+$ git clone https://github.com/spring-cloud-stream-app-starters/http.git
+$ cd http
+$ mvn clean install -PgenerateApps
+$ cd apps/http-source-rabbit
+$ mvn clean package
+$ java -jar target/http-source-rabbit-2.0.0.BUILD-SNAPSHOT.jar --server.port=8000 --spring.cloud.stream.default.contentType=text/plain --spring.cloud.stream.bindings.output.destination=http_lines --spring.cloud.stream.defaultBinder=rabbit --spring.rabbitmq.host=192.168.99.100
+```
+
+#### Docker Toolbox for Windows
 ```
 $ git clone https://github.com/spring-cloud-stream-app-starters/http.git
 $ cd http
@@ -475,11 +486,11 @@ $ docker push komushi/s3-sink-kinesis
 | Custom TCP Rule | TCP      | 8000        | 0.0.0.0/0                   |
 | Custom TCP Rule | TCP      | 27017       | 0.0.0.0/0                   |
 
-### 6-3. Edit 'ContainerDefinitions.Image' in 'cfn/for-http-source/task-def-apps.yaml'
-#### Replace 'komushi' with your your_docker_hub_id
-
-### 6-4. Edit TemplateURL in 'cfn/for-http-source/master.yaml'
+### 6-3. Edit TemplateURL in 'cfn/for-http-source/master.yaml'
 #### Replace with your template URL
+
+### 6-4. Edit 'ContainerDefinitions.Image' in 'cfn/for-http-source/task-def-apps.yaml'
+#### Replace 'komushi' with your your_docker_hub_id
 
 ### 6-5. Deploy resources with CloudFormation Template
 ![Master Stack](cfn/for-http-source/master.yaml)
@@ -500,8 +511,8 @@ $ docker push komushi/s3-sink-kinesis
 * def-http-source
 
 ### 6-7. Athena query count and data
-* Use [AWS Glue](https://console.aws.amazon.com/glue/home) to create a table geojson with crawler.
-* Use [Amazon Athena](https://console.aws.amazon.com/athena/home) to query exported data.
+* Use [AWS Glue](https://console.aws.amazon.com/glue/home) to create a table geojson with crawler. [Tutorial/Guide](https://docs.aws.amazon.com/glue/latest/dg/console-crawlers.html)
+* Use [Amazon Athena](https://console.aws.amazon.com/athena/home) to query exported data. [Tutorial/Guide Step3 Only](https://docs.aws.amazon.com/athena/latest/ug/getting-started.html)
 
 ```
 select count(*) from geojson
