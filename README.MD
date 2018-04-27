@@ -32,6 +32,11 @@ $ docker pull komushi/flat-file-reader
 $ git clone https://github.com/komushi/scs-kinesis-handson.git
 ```
 
+### 1-9. aws cli
+```
+$ aws configure
+...
+```
 ------
 ## 2. Build and run with RabbitMQ
 ## RabbitMQでビルドし、動作確認する
@@ -99,13 +104,21 @@ $ java -jar target/scs-processor-geocoding-reverse-2.0.0.BUILD-SNAPSHOT.jar --sp
 ### 2-4. Run a second filter processor rabbit
 #### Filter json with specified dropoff longitude range
 #### Go to the folder created at 2-2
+#### Docker for Mac or Windows
 ```
 $ cd filter/apps/filter-processor-rabbit
 $ java -jar target/filter-processor-rabbit-2.0.0.BUILD-SNAPSHOT.jar --filter.expression="#jsonPath(new String(payload),'$.dropoffLongitude') < 139.76 && #jsonPath(new String(payload),'$.dropoffLongitude') > 139.74" --spring.cloud.stream.bindings.input.destination=geojson --spring.cloud.stream.bindings.input.group=filter --spring.cloud.stream.bindings.input.contentType=application/json --spring.cloud.stream.bindings.output.destination=filtered_geojson --spring.cloud.stream.bindings.output.contentType=application/json --server.port=8030 --spring.cloud.stream.defaultBinder=rabbit
 ```
 
+#### Docker Toolbox for Windows
+```
+$ cd filter/apps/filter-processor-rabbit
+$ java -jar target/filter-processor-rabbit-2.0.0.BUILD-SNAPSHOT.jar --filter.expression="#jsonPath(new String(payload),'$.dropoffLongitude') < 139.76 && #jsonPath(new String(payload),'$.dropoffLongitude') > 139.74" --spring.cloud.stream.bindings.input.destination=geojson --spring.cloud.stream.bindings.input.group=filter --spring.cloud.stream.bindings.input.contentType=application/json --spring.cloud.stream.bindings.output.destination=filtered_geojson --spring.cloud.stream.bindings.output.contentType=application/json --server.port=8030 --spring.cloud.stream.defaultBinder=rabbit  --spring.rabbitmq.host=192.168.99.100
+```
+
 ### 2-5. Build log sink rabbit and run
 #### Export filtered data to log
+#### Docker for Mac or Windows
 ```
 $ git clone https://github.com/spring-cloud-stream-app-starters/log.git
 $ cd log
@@ -115,9 +128,21 @@ $ mvn clean package
 $ java -jar target/log-sink-rabbit-2.0.0.BUILD-SNAPSHOT.jar --log.expression="#jsonPath(new String(payload),'$')" --spring.cloud.stream.bindings.input.destination=filtered_geojson --spring.cloud.stream.bindings.input.group=log --spring.cloud.stream.bindings.input.contentType=application/json --server.port=8040 --spring.cloud.stream.defaultBinder=rabbit
 ```
 
+#### Docker Toolbox for Windows
+```
+$ git clone https://github.com/spring-cloud-stream-app-starters/log.git
+$ cd log
+$ mvn clean install -PgenerateApps
+$ cd apps/log-sink-rabbit
+$ mvn clean package
+$ java -jar target/log-sink-rabbit-2.0.0.BUILD-SNAPSHOT.jar --log.expression="#jsonPath(new String(payload),'$')" --spring.cloud.stream.bindings.input.destination=filtered_geojson --spring.cloud.stream.bindings.input.group=log --spring.cloud.stream.bindings.input.contentType=application/json --server.port=8040 --spring.cloud.stream.defaultBinder=rabbit --spring.rabbitmq.host=192.168.99.100
+```
+
+
 ### 2-6. Build aws-s3 sink rabbit and run
 #### Replace 'glue-output-ap-northeast-1' with your own bucket to export filtered data to S3 bucket
 #### Replace 'ap-northeast-1' with your expected region
+#### Docker for Mac or Windows
 ```
 $ git clone https://github.com/spring-cloud-stream-app-starters/aws-s3.git
 $ cd aws-s3
@@ -127,19 +152,37 @@ $ mvn clean package
 $ java -jar target/s3-sink-rabbit-2.0.0.BUILD-SNAPSHOT.jar --s3.key-expression="#jsonPath(new String(payload),'$.uuid') + '.json'"  --s3.bucket=/glue-output-ap-northeast-1/geojson --spring.cloud.stream.bindings.input.destination=filtered_geojson --spring.cloud.stream.bindings.input.group=s3 --spring.cloud.stream.bindings.input.contentType=application/json --server.port=8050 --spring.cloud.stream.defaultBinder=rabbit --cloud.aws.region.static=ap-northeast-1
 ```
 
+#### Docker Toolbox for Windows
+```
+$ git clone https://github.com/spring-cloud-stream-app-starters/aws-s3.git
+$ cd aws-s3
+$ mvn clean install -PgenerateApps
+$ cd apps/s3-sink-rabbit
+$ mvn clean package
+$ java -jar target/s3-sink-rabbit-2.0.0.BUILD-SNAPSHOT.jar --s3.key-expression="#jsonPath(new String(payload),'$.uuid') + '.json'"  --s3.bucket=/glue-output-ap-northeast-1/geojson --spring.cloud.stream.bindings.input.destination=filtered_geojson --spring.cloud.stream.bindings.input.group=s3 --spring.cloud.stream.bindings.input.contentType=application/json --server.port=8050 --spring.cloud.stream.defaultBinder=rabbit --cloud.aws.region.static=ap-northeast-1 --spring.rabbitmq.host=192.168.99.100
+```
+
 ### 2-7. Start the stream
+#### Send one line
 ```
 curl -H "Content-Type: text/plain" -X POST -d'468244D1361B8A3EB8D206CC394BC9E9,BB899DFEA9CC964B50C540A1D685CCFB,2013-01-01 00:00:00,2013-01-01 00:04:00,240,1.71,139.752268,35.677043,139.771699,35.697283,CSH,6.50,0.50,0.50,0.00,0.00,7.50' 'http://localhost:8000'
 ```
 
+#### Send a lot of lines
+#### Docker for Mac or Windows
 ```
 docker run komushi/flat-file-reader --url=http://docker.for.mac.localhost:8000
 ```
 
-### 2-8. Athena query count and data
-* Use [AWS Glue](https://console.aws.amazon.com/glue/home) to create a table geojson with crawler.
+#### Docker Toolbox for Windows
+```
+docker run komushi/flat-file-reader --url=http://<Windows_Local_IP>:8000
+```
 
-* Use [Amazon Athena](https://console.aws.amazon.com/athena/home) to query exported data.
+
+### 2-8. Athena query count and data
+* Use [AWS Glue](https://console.aws.amazon.com/glue/home) to create a table geojson with crawler. [Tutorial/Guide](https://docs.aws.amazon.com/glue/latest/dg/console-crawlers.html)
+* Use [Amazon Athena](https://console.aws.amazon.com/athena/home) to query exported data. [Tutorial/Guide Step3 Only](https://docs.aws.amazon.com/athena/latest/ug/getting-started.html)
 
 ```
 select count(*) from geojson
@@ -159,16 +202,16 @@ select * from geojson
 
 #### Scale out the 2nd geocoding processor
 #### Replace 'ap-northeast-1' with your expected region
+#### Docker for Mac or Windows
 ```
 $ cd scs-process-geocoding-reverse
 $ java -jar target/scs-processor-geocoding-reverse-2.0.0.BUILD-SNAPSHOT.jar --spring.cloud.stream.bindings.input.contentType=text/plain --spring.cloud.stream.bindings.input.destination=filtered_lines --spring.cloud.stream.bindings.input.group=geocoding --spring.cloud.stream.bindings.output.destination=geojson --spring.cloud.stream.bindings.output.contentType=application/json --properties.mongo.hostName=localhost --properties.mongo.port=27017 --properties.mongo.database=geojson --properties.mongo.collection=blocks --properties.mongo.user=root --properties.mongo.password=keepitsimple --logging.level.info.cloudnative=TRACE --server.port=8021 --spring.cloud.stream.defaultBinder=rabbit --cloud.aws.region.static=ap-northeast-1
 ```
 
-#### Scale out the 3rd geocoding processor
-#### Replace 'ap-northeast-1' with your expected region
+#### Docker Toolbox for Windows
 ```
 $ cd scs-process-geocoding-reverse
-$ java -jar target/scs-processor-geocoding-reverse-2.0.0.BUILD-SNAPSHOT.jar --spring.cloud.stream.bindings.input.contentType=text/plain --spring.cloud.stream.bindings.input.destination=filtered_lines --spring.cloud.stream.bindings.input.group=geocoding --spring.cloud.stream.bindings.output.destination=geojson --spring.cloud.stream.bindings.output.contentType=application/json --properties.mongo.hostName=localhost --properties.mongo.port=27017 --properties.mongo.database=geojson --properties.mongo.collection=blocks --properties.mongo.user=root --properties.mongo.password=keepitsimple --logging.level.info.cloudnative=TRACE --server.port=8022 --spring.cloud.stream.defaultBinder=rabbit --cloud.aws.region.static=ap-northeast-1
+$ java -jar target/scs-processor-geocoding-reverse-2.0.0.BUILD-SNAPSHOT.jar --spring.cloud.stream.bindings.input.contentType=text/plain --spring.cloud.stream.bindings.input.destination=filtered_lines --spring.cloud.stream.bindings.input.group=geocoding --spring.cloud.stream.bindings.output.destination=geojson --spring.cloud.stream.bindings.output.contentType=application/json --properties.mongo.hostName=192.168.99.100 --properties.mongo.port=27017 --properties.mongo.database=geojson --properties.mongo.collection=blocks --properties.mongo.user=root --properties.mongo.password=keepitsimple --logging.level.info.cloudnative=TRACE --server.port=8021 --spring.cloud.stream.defaultBinder=rabbit --cloud.aws.region.static=ap-northeast-1 --spring.rabbitmq.host=192.168.99.100
 ```
 
 #### Check the CPU load and th PID of the Java proccesses - scs-processor-geocoding-reverse-2.0.0.BUILD-SNAPSHOT.jar
@@ -213,8 +256,14 @@ $ java -jar target/filter-processor-rabbit-2.0.0.BUILD-SNAPSHOT.jar --filter.exp
 
 ### 4-3. Run geocoding processor with kinesis
 #### Replace 'ap-northeast-1' with your expected region
+#### Docker for Mac or Windows
 ```
 $ java -jar target/scs-processor-geocoding-reverse-2.0.0.BUILD-SNAPSHOT.jar --spring.cloud.stream.bindings.input.contentType=text/plain --spring.cloud.stream.bindings.input.destination=filtered_lines --spring.cloud.stream.bindings.input.group=geocoding --spring.cloud.stream.bindings.output.destination=geojson --spring.cloud.stream.bindings.output.contentType=application/json --spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1 --properties.mongo.hostName=localhost --properties.mongo.port=27017 --properties.mongo.database=geojson --properties.mongo.collection=blocks --properties.mongo.user=root --properties.mongo.password=keepitsimple --logging.level.info.cloudnative=TRACE --server.port=8020 --spring.cloud.stream.defaultBinder=kinesis --cloud.aws.region.static=ap-northeast-1
+```
+
+#### Docker Toolbox for Windows
+```
+$ java -jar target/scs-processor-geocoding-reverse-2.0.0.BUILD-SNAPSHOT.jar --spring.cloud.stream.bindings.input.contentType=text/plain --spring.cloud.stream.bindings.input.destination=filtered_lines --spring.cloud.stream.bindings.input.group=geocoding --spring.cloud.stream.bindings.output.destination=geojson --spring.cloud.stream.bindings.output.contentType=application/json --spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1 --properties.mongo.hostName=192.168.99.100 --properties.mongo.port=27017 --properties.mongo.database=geojson --properties.mongo.collection=blocks --properties.mongo.user=root --properties.mongo.password=keepitsimple --logging.level.info.cloudnative=TRACE --server.port=8020 --spring.cloud.stream.defaultBinder=kinesis --cloud.aws.region.static=ap-northeast-1
 ```
 
 ### 4-4. Run a second filter processor kinesis
@@ -259,7 +308,7 @@ $ mvn clean package
 $ java -jar target/s3-sink-rabbit-2.0.0.BUILD-SNAPSHOT.jar --s3.key-expression="#jsonPath(new String(payload),'$.uuid') + '.json'"  --s3.bucket=/glue-output-ap-northeast-1/geojson --spring.cloud.stream.bindings.input.destination=filtered_geojson --spring.cloud.stream.bindings.input.group=s3 --spring.cloud.stream.bindings.input.contentType=application/json --server.port=8050 --spring.cloud.stream.defaultBinder=kinesis --cloud.aws.region.static=ap-northeast-1 
 ```
 
-### 4-8. Start the stream
+### 4-7. Start the stream
 ```
 curl -H "Content-Type: text/plain" -X POST -d'468244D1361B8A3EB8D206CC394BC9E9,BB899DFEA9CC964B50C540A1D685CCFB,2013-01-01 00:00:00,2013-01-01 00:04:00,240,1.71,139.752268,35.677043,139.771699,35.697283,CSH,6.50,0.50,0.50,0.00,0.00,7.50' 'http://localhost:8000'
 ```
@@ -268,10 +317,9 @@ curl -H "Content-Type: text/plain" -X POST -d'468244D1361B8A3EB8D206CC394BC9E9,B
 docker run komushi/flat-file-reader --url=http://docker.for.mac.localhost:8000
 ```
 
-### 4-7. Athena query count and data
-* Use [AWS Glue](https://console.aws.amazon.com/glue/home) to create a table geojson with crawler.
-
-* Use [Amazon Athena](https://console.aws.amazon.com/athena/home) to query exported data.
+### 4-8. Athena query count and data
+* Use [AWS Glue](https://console.aws.amazon.com/glue/home) to create a table geojson with crawler. [Tutorial/Guide](https://docs.aws.amazon.com/glue/latest/dg/console-crawlers.html)
+* Use [Amazon Athena](https://console.aws.amazon.com/athena/home) to query exported data. [Tutorial/Guide Step3 Only](https://docs.aws.amazon.com/athena/latest/ug/getting-started.html)
 
 ```
 select count(*) from geojson
@@ -293,7 +341,7 @@ docker login
   <plugin>
     <groupId>io.fabric8</groupId>
     <artifactId>docker-maven-plugin</artifactId>
-    <version>0.14.2</version>
+    <version>0.25.2</version>
     <configuration>
       <images>
         <image>
@@ -334,7 +382,7 @@ $ docker push komushi/http-source-kinesis
   <plugin>
     <groupId>io.fabric8</groupId>
     <artifactId>docker-maven-plugin</artifactId>
-    <version>0.14.2</version>
+    <version>0.25.2</version>
     <configuration>
       <images>
         <image>
@@ -375,7 +423,7 @@ $ docker push komushi/filter-processor-kinesis
   <plugin>
     <groupId>io.fabric8</groupId>
     <artifactId>docker-maven-plugin</artifactId>
-    <version>0.14.2</version>
+    <version>0.25.2</version>
     <configuration>
       <images>
         <image>
@@ -416,7 +464,7 @@ $ docker push komushi/geocoding-processor-kinesis
   <plugin>
     <groupId>io.fabric8</groupId>
     <artifactId>docker-maven-plugin</artifactId>
-    <version>0.14.2</version>
+    <version>0.25.2</version>
     <configuration>
       <images>
         <image>
@@ -457,7 +505,7 @@ $ docker push komushi/log-sink-kinesis
   <plugin>
     <groupId>io.fabric8</groupId>
     <artifactId>docker-maven-plugin</artifactId>
-    <version>0.14.2</version>
+    <version>0.25.2</version>
     <configuration>
       <images>
         <image>

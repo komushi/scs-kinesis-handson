@@ -26,6 +26,12 @@ $ docker run -p 27017:27017 komushi/mongo-geojson
 $ git clone https://github.com/komushi/scs-kinesis-handson.git
 ```
 
+### 1-8. aws cli
+```
+$ aws configure
+...
+```
+
 ------
 ## 2. Build and run with RabbitMQ
 
